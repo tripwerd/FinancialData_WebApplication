@@ -158,9 +158,10 @@ async function getHistoricalPrices(symbol: string): Promise<HistoricalPrice[]> {
   return data || [];
 }
 
-export async function getHistoricalMarketCap(
+// Get estimated historical market cap (10 years, calculated from price * shares)
+export async function getEstimatedHistoricalMarketCap(
   symbol: string,
-  years: number = 5
+  years: number = 10
 ): Promise<HistoricalMarketCap[]> {
   // Fetch profile and historical prices in parallel
   const [profile, prices] = await Promise.all([
@@ -187,4 +188,31 @@ export async function getHistoricalMarketCap(
       date: p.date,
       marketCap: p.close * sharesOutstanding,
     }));
+}
+
+// Get exact historical market cap (limited to ~3 months on free tier)
+export async function getExactHistoricalMarketCap(
+  symbol: string
+): Promise<HistoricalMarketCap[]> {
+  const response = await fetch(
+    `${BASE_URL}/historical-market-capitalization?symbol=${symbol.toUpperCase()}&apikey=${getApiKey()}`
+  );
+
+  if (!response.ok) {
+    if (response.status === 402) {
+      return [];
+    }
+    throw new Error(`FMP API error: ${response.status}`);
+  }
+
+  const data: HistoricalMarketCap[] = await response.json();
+  return data || [];
+}
+
+// Backwards compatibility
+export async function getHistoricalMarketCap(
+  symbol: string,
+  years: number = 10
+): Promise<HistoricalMarketCap[]> {
+  return getEstimatedHistoricalMarketCap(symbol, years);
 }

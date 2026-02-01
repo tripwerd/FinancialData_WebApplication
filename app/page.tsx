@@ -77,6 +77,7 @@ export default function Home() {
           )}
           {company && company.isLimited && (
             <LimitedCompanyCard
+              key={company.symbol}
               symbol={company.symbol}
               companyName={company.companyName}
               marketCap={company.marketCap}
@@ -85,6 +86,7 @@ export default function Home() {
           )}
           {company && !company.isLimited && (
             <CompanyCard
+              key={company.symbol}
               symbol={company.symbol}
               companyName={company.companyName}
               marketCap={company.marketCap}

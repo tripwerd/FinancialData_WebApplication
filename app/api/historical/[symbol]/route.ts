@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getHistoricalMarketCap } from "@/lib/fmp";
+import { getEstimatedHistoricalMarketCap, getExactHistoricalMarketCap } from "@/lib/fmp";
 
 export async function GET(
   request: Request,
@@ -7,7 +7,12 @@ export async function GET(
 ) {
   try {
     const { symbol } = await params;
-    const data = await getHistoricalMarketCap(symbol, 5);
+    const { searchParams } = new URL(request.url);
+    const mode = searchParams.get("mode") || "estimated";
+
+    const data = mode === "exact"
+      ? await getExactHistoricalMarketCap(symbol)
+      : await getEstimatedHistoricalMarketCap(symbol, 10);
 
     if (!data || data.length === 0) {
       return NextResponse.json(

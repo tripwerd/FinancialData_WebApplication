@@ -215,9 +215,18 @@ export default function CompanyCard({
           ) : (
             <>
               <div className="mb-4 flex items-center justify-between">
-                <p className="text-sm text-text-muted">
-                  Comparing {symbol} vs {compareCompany} (5 year market cap)
-                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCompareCompany(null);
+                      setCompareSymbol("");
+                    }}
+                    className="rounded-lg border border-card-border px-3 py-1 text-sm text-text-muted transition-colors hover:border-foreground hover:text-foreground"
+                  >
+                    Compare New Company
+                  </button>
+                </div>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

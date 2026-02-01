@@ -27,6 +27,8 @@ interface ChartData {
   [key: string]: string | number;
 }
 
+type ChartMode = "10Y" | "3M";
+
 function formatMarketCap(value: number): string {
   if (value >= 1e12) {
     return `$${(value / 1e12).toFixed(1)}T`;
@@ -44,6 +46,7 @@ export default function ComparisonChart({
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<ChartMode>("10Y");
 
   useEffect(() => {
     async function fetchData() {
@@ -51,9 +54,10 @@ export default function ComparisonChart({
       setError(null);
 
       try {
+        const apiMode = mode === "10Y" ? "estimated" : "exact";
         const [res1, res2] = await Promise.all([
-          fetch(`/api/historical/${symbol1}`),
-          fetch(`/api/historical/${symbol2}`),
+          fetch(`/api/historical/${symbol1}?mode=${apiMode}`),
+          fetch(`/api/historical/${symbol2}?mode=${apiMode}`),
         ]);
 
         if (!res1.ok || !res2.ok) {
@@ -92,8 +96,10 @@ export default function ComparisonChart({
           .filter((d) => d[symbol1] && d[symbol2]) // Only include dates with both values
           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-        // Sample to reduce data points (every 5th day for smoother chart)
-        const sampled = combined.filter((_, i) => i % 5 === 0);
+        // Sample to reduce data points for 10Y view
+        const sampled = mode === "10Y"
+          ? combined.filter((_, i) => i % 5 === 0)
+          : combined;
 
         setChartData(sampled);
       } catch {
@@ -104,7 +110,7 @@ export default function ComparisonChart({
     }
 
     fetchData();
-  }, [symbol1, symbol2]);
+  }, [symbol1, symbol2, mode]);
 
   if (loading) {
     return (
@@ -131,63 +137,95 @@ export default function ComparisonChart({
   }
 
   return (
-    <div style={{ width: "100%", height: 320 }}>
-      <ResponsiveContainer width="100%" height={320}>
-        <LineChart data={chartData}>
-          <XAxis
-            dataKey="date"
-            stroke="#a3a3a3"
-            tick={{ fill: "#a3a3a3", fontSize: 12 }}
-            tickFormatter={(value) => {
-              const date = new Date(value);
-              return `${date.getMonth() + 1}/${date.getFullYear().toString().slice(2)}`;
-            }}
-            interval="preserveStartEnd"
-            minTickGap={50}
-          />
-          <YAxis
-            stroke="#a3a3a3"
-            tick={{ fill: "#a3a3a3", fontSize: 12 }}
-            tickFormatter={formatMarketCap}
-            width={70}
-          />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "#171717",
-              border: "1px solid #262626",
-              borderRadius: "8px",
-            }}
-            labelStyle={{ color: "#e5e5e5" }}
-            formatter={(value) => [
-              formatMarketCap(value as number),
-              "",
-            ]}
-            labelFormatter={(label) => {
-              const date = new Date(label);
-              return date.toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              });
-            }}
-          />
-          <Legend wrapperStyle={{ color: "#e5e5e5" }} />
-          <Line
-            type="monotone"
-            dataKey={symbol1}
-            stroke="#22c55e"
-            strokeWidth={2}
-            dot={false}
-          />
-          <Line
-            type="monotone"
-            dataKey={symbol2}
-            stroke="#60a5fa"
-            strokeWidth={2}
-            dot={false}
-          />
-        </LineChart>
-      </ResponsiveContainer>
+    <div>
+      {/* Toggle and label */}
+      <div className="mb-4 flex items-center gap-3">
+        <div className="flex rounded-lg border border-card-border overflow-hidden">
+          <button
+            onClick={() => setMode("10Y")}
+            className={`px-3 py-1 text-sm font-medium transition-colors ${
+              mode === "10Y"
+                ? "bg-green-primary text-black"
+                : "bg-card-bg text-text-muted hover:text-foreground"
+            }`}
+          >
+            10Y
+          </button>
+          <button
+            onClick={() => setMode("3M")}
+            className={`px-3 py-1 text-sm font-medium transition-colors ${
+              mode === "3M"
+                ? "bg-green-primary text-black"
+                : "bg-card-bg text-text-muted hover:text-foreground"
+            }`}
+          >
+            3M
+          </button>
+        </div>
+        {mode === "10Y" && (
+          <span className="text-sm text-text-muted">(Estimation)</span>
+        )}
+      </div>
+
+      {/* Chart */}
+      <div style={{ width: "100%", height: 320 }}>
+        <ResponsiveContainer width="100%" height={320}>
+          <LineChart data={chartData}>
+            <XAxis
+              dataKey="date"
+              stroke="#a3a3a3"
+              tick={{ fill: "#a3a3a3", fontSize: 12 }}
+              tickFormatter={(value) => {
+                const date = new Date(value);
+                return `${date.getMonth() + 1}/${date.getFullYear().toString().slice(2)}`;
+              }}
+              interval="preserveStartEnd"
+              minTickGap={50}
+            />
+            <YAxis
+              stroke="#a3a3a3"
+              tick={{ fill: "#a3a3a3", fontSize: 12 }}
+              tickFormatter={formatMarketCap}
+              width={70}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "#171717",
+                border: "1px solid #262626",
+                borderRadius: "8px",
+              }}
+              labelStyle={{ color: "#e5e5e5" }}
+              formatter={(value) => [
+                formatMarketCap(value as number),
+                "",
+              ]}
+              labelFormatter={(label) => {
+                const date = new Date(label);
+                return date.toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                });
+              }}
+            />
+            <Legend wrapperStyle={{ color: "#e5e5e5" }} />
+            <Line
+              type="monotone"
+              dataKey={symbol1}
+              stroke="#22c55e"
+              strokeWidth={2}
+              dot={false}
+            />
+            <Line
+              type="monotone"
+              dataKey={symbol2}
+              stroke="#60a5fa"
+              strokeWidth={2}
+              dot={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

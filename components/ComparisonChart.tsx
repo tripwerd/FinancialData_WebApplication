@@ -109,7 +109,7 @@ export default function ComparisonChart({
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <p className="text-[var(--text-muted)]">Loading chart...</p>
+        <p className="text-text-muted">Loading chart...</p>
       </div>
     );
   }
@@ -125,7 +125,7 @@ export default function ComparisonChart({
   if (chartData.length === 0) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <p className="text-[var(--text-muted)]">No data available</p>
+        <p className="text-text-muted">No data available</p>
       </div>
     );
   }

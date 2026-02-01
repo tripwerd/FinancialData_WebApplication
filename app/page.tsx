@@ -40,13 +40,13 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--background)]">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-2xl px-4 py-16">
         <header className="mb-12 text-center">
-          <h1 className="text-4xl font-bold text-[var(--green-primary)]">
+          <h1 className="text-4xl font-bold text-green-primary">
             Compare
           </h1>
-          <p className="mt-2 text-[var(--text-muted)]">
+          <p className="mt-2 text-text-muted">
             See how companies stack up
           </p>
         </header>
@@ -58,12 +58,12 @@ export default function Home() {
               value={ticker}
               onChange={(e) => setTicker(e.target.value.toUpperCase())}
               placeholder="Search for a ticker"
-              className="flex-1 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-4 py-3 text-[var(--foreground)] placeholder:text-[var(--text-muted)] focus:border-[var(--green-primary)]"
+              className="flex-1 rounded-lg border border-card-border bg-card-bg px-4 py-3 text-foreground placeholder:text-text-muted focus:border-green-primary"
             />
             <button
               type="submit"
               disabled={loading || !ticker.trim()}
-              className="rounded-lg bg-[var(--green-primary)] px-6 py-3 font-medium text-black transition-colors hover:bg-[var(--green-light)] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-lg bg-green-primary px-6 py-3 font-medium text-black transition-colors hover:bg-green-light disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "..." : "Search"}
             </button>
@@ -72,7 +72,7 @@ export default function Home() {
 
         <div className="space-y-4">
           {error && searched && (
-            <p className="text-center text-[var(--text-muted)]">{error}</p>
+            <p className="text-center text-text-muted">{error}</p>
           )}
           {company && (
             <CompanyCard

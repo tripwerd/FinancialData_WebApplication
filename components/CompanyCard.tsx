@@ -95,22 +95,22 @@ export default function CompanyCard({
   }
 
   return (
-    <div className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] p-5">
+    <div className="w-full rounded-lg border border-card-border bg-card-bg p-5">
       {/* Header */}
       <div
         className="flex cursor-pointer items-center justify-between"
         onClick={() => !comparing && setExpanded(!expanded)}
       >
         <div>
-          <span className="text-lg font-semibold text-[var(--green-primary)]">
+          <span className="text-lg font-semibold text-green-primary">
             {symbol}
           </span>
-          <h2 className="text-xl font-medium text-[var(--foreground)]">
+          <h2 className="text-xl font-medium text-foreground">
             {companyName}
           </h2>
         </div>
         {!comparing && (
-          <span className="text-2xl text-[var(--text-muted)]">
+          <span className="text-2xl text-text-muted">
             {expanded ? "−" : "+"}
           </span>
         )}
@@ -119,15 +119,15 @@ export default function CompanyCard({
       {/* Collapsed view - core metrics */}
       <div className="mt-4 grid grid-cols-3 gap-4">
         <div>
-          <p className="text-sm text-[var(--text-muted)]">Market Cap</p>
+          <p className="text-sm text-text-muted">Market Cap</p>
           <p className="text-lg font-medium">{formatCurrency(marketCap)}</p>
         </div>
         <div>
-          <p className="text-sm text-[var(--text-muted)]">Revenue (TTM)</p>
+          <p className="text-sm text-text-muted">Revenue (TTM)</p>
           <p className="text-lg font-medium">{formatCurrency(revenueTTM)}</p>
         </div>
         <div>
-          <p className="text-sm text-[var(--text-muted)]">Earnings (TTM)</p>
+          <p className="text-sm text-text-muted">Earnings (TTM)</p>
           <p className="text-lg font-medium">{formatCurrency(earningsTTM)}</p>
         </div>
       </div>
@@ -135,36 +135,36 @@ export default function CompanyCard({
       {/* Expanded view - all metrics */}
       {expanded && !comparing && (
         <>
-          <div className="mt-4 grid grid-cols-2 gap-4 border-t border-[var(--card-border)] pt-4 sm:grid-cols-5">
+          <div className="mt-4 grid grid-cols-2 gap-4 border-t border-card-border pt-4 sm:grid-cols-5">
             <div>
-              <p className="text-sm text-[var(--text-muted)]">FCF (TTM)</p>
+              <p className="text-sm text-text-muted">FCF (TTM)</p>
               <p className="text-lg font-medium">{formatCurrency(fcfTTM)}</p>
             </div>
             <div>
-              <p className="text-sm text-[var(--text-muted)]">Operating Margin</p>
+              <p className="text-sm text-text-muted">Operating Margin</p>
               <p className="text-lg font-medium">{formatPercent(operatingMargin)}</p>
             </div>
             <div>
-              <p className="text-sm text-[var(--text-muted)]">P/E Ratio</p>
+              <p className="text-sm text-text-muted">P/E Ratio</p>
               <p className="text-lg font-medium">{formatNumber(peRatio)}</p>
             </div>
             <div>
-              <p className="text-sm text-[var(--text-muted)]">Beta</p>
+              <p className="text-sm text-text-muted">Beta</p>
               <p className="text-lg font-medium">{formatNumber(beta)}</p>
             </div>
             <div>
-              <p className="text-sm text-[var(--text-muted)]">Debt/Equity</p>
+              <p className="text-sm text-text-muted">Debt/Equity</p>
               <p className="text-lg font-medium">{formatNumber(debtToEquity)}</p>
             </div>
           </div>
 
-          <div className="mt-4 border-t border-[var(--card-border)] pt-4">
+          <div className="mt-4 border-t border-card-border pt-4">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setComparing(true);
               }}
-              className="rounded-lg bg-[var(--green-primary)] px-4 py-2 font-medium text-black transition-colors hover:bg-[var(--green-light)]"
+              className="rounded-lg bg-green-primary px-4 py-2 font-medium text-black transition-colors hover:bg-green-light"
             >
               Compare
             </button>
@@ -174,10 +174,10 @@ export default function CompanyCard({
 
       {/* Compare mode */}
       {comparing && (
-        <div className="mt-4 border-t border-[var(--card-border)] pt-4">
+        <div className="mt-4 border-t border-card-border pt-4">
           {!compareCompany ? (
             <>
-              <p className="mb-3 text-sm text-[var(--text-muted)]">
+              <p className="mb-3 text-sm text-text-muted">
                 Enter a ticker to compare with {symbol}
               </p>
               <form onSubmit={handleCompareSearch} className="flex gap-3">
@@ -186,13 +186,13 @@ export default function CompanyCard({
                   value={compareSymbol}
                   onChange={(e) => setCompareSymbol(e.target.value.toUpperCase())}
                   placeholder="Enter a ticker"
-                  className="flex-1 rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-4 py-2 text-[var(--foreground)] placeholder:text-[var(--text-muted)] focus:border-[var(--green-primary)]"
+                  className="flex-1 rounded-lg border border-card-border bg-background px-4 py-2 text-foreground placeholder:text-text-muted focus:border-green-primary"
                   onClick={(e) => e.stopPropagation()}
                 />
                 <button
                   type="submit"
                   disabled={compareLoading || !compareSymbol.trim()}
-                  className="rounded-lg bg-[var(--green-primary)] px-4 py-2 font-medium text-black transition-colors hover:bg-[var(--green-light)] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-lg bg-green-primary px-4 py-2 font-medium text-black transition-colors hover:bg-green-light disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {compareLoading ? "..." : "Go"}
@@ -203,7 +203,7 @@ export default function CompanyCard({
                     e.stopPropagation();
                     handleCloseCompare();
                   }}
-                  className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-[var(--text-muted)] transition-colors hover:border-[var(--foreground)] hover:text-[var(--foreground)]"
+                  className="rounded-lg border border-card-border px-4 py-2 text-text-muted transition-colors hover:border-foreground hover:text-foreground"
                 >
                   Cancel
                 </button>
@@ -215,7 +215,7 @@ export default function CompanyCard({
           ) : (
             <>
               <div className="mb-4 flex items-center justify-between">
-                <p className="text-sm text-[var(--text-muted)]">
+                <p className="text-sm text-text-muted">
                   Comparing {symbol} vs {compareCompany} (5 year market cap)
                 </p>
                 <button
@@ -223,7 +223,7 @@ export default function CompanyCard({
                     e.stopPropagation();
                     handleCloseCompare();
                   }}
-                  className="text-sm text-[var(--text-muted)] hover:text-[var(--foreground)]"
+                  className="text-sm text-text-muted hover:text-foreground"
                 >
                   Close
                 </button>

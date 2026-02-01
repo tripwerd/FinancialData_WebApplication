@@ -1,0 +1,27 @@
+import { NextResponse } from "next/server";
+import { getHistoricalMarketCap } from "@/lib/fmp";
+
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ symbol: string }> }
+) {
+  try {
+    const { symbol } = await params;
+    const data = await getHistoricalMarketCap(symbol, 5);
+
+    if (!data || data.length === 0) {
+      return NextResponse.json(
+        { error: "Historical data not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error("Error fetching historical data:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch historical data" },
+      { status: 500 }
+    );
+  }
+}

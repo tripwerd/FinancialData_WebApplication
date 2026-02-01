@@ -106,3 +106,30 @@ export async function getFullCompanyData(
     debtToEquity: ratios.debtToEquityRatioTTM,
   };
 }
+
+export interface HistoricalMarketCap {
+  symbol: string;
+  date: string;
+  marketCap: number;
+}
+
+export async function getHistoricalMarketCap(
+  symbol: string,
+  years: number = 5
+): Promise<HistoricalMarketCap[]> {
+  const response = await fetch(
+    `${BASE_URL}/historical-market-capitalization?symbol=${symbol.toUpperCase()}&apikey=${getApiKey()}`
+  );
+
+  if (!response.ok) {
+    throw new Error(`FMP API error: ${response.status}`);
+  }
+
+  const data: HistoricalMarketCap[] = await response.json();
+
+  // Filter to last N years
+  const cutoffDate = new Date();
+  cutoffDate.setFullYear(cutoffDate.getFullYear() - years);
+
+  return data.filter((d) => new Date(d.date) >= cutoffDate);
+}

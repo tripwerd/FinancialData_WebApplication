@@ -140,23 +140,51 @@ export interface HistoricalMarketCap {
   marketCap: number;
 }
 
-export async function getHistoricalMarketCap(
-  symbol: string,
-  years: number = 5
-): Promise<HistoricalMarketCap[]> {
+interface HistoricalPrice {
+  date: string;
+  close: number;
+}
+
+async function getHistoricalPrices(symbol: string): Promise<HistoricalPrice[]> {
   const response = await fetch(
-    `${BASE_URL}/historical-market-capitalization?symbol=${symbol.toUpperCase()}&apikey=${getApiKey()}`
+    `${BASE_URL}/historical-price-eod/full?symbol=${symbol.toUpperCase()}&apikey=${getApiKey()}`
   );
 
   if (!response.ok) {
     throw new Error(`FMP API error: ${response.status}`);
   }
 
-  const data: HistoricalMarketCap[] = await response.json();
+  const data = await response.json();
+  return data || [];
+}
+
+export async function getHistoricalMarketCap(
+  symbol: string,
+  years: number = 5
+): Promise<HistoricalMarketCap[]> {
+  // Fetch profile and historical prices in parallel
+  const [profile, prices] = await Promise.all([
+    getCompanyProfile(symbol),
+    getHistoricalPrices(symbol),
+  ]);
+
+  if (!profile || prices.length === 0) {
+    return [];
+  }
+
+  // Calculate shares outstanding from current market cap and price
+  const sharesOutstanding = profile.marketCap / profile.price;
 
   // Filter to last N years
   const cutoffDate = new Date();
   cutoffDate.setFullYear(cutoffDate.getFullYear() - years);
 
-  return data.filter((d) => new Date(d.date) >= cutoffDate);
+  // Calculate historical market cap from price * shares
+  return prices
+    .filter((p) => new Date(p.date) >= cutoffDate)
+    .map((p) => ({
+      symbol: symbol.toUpperCase(),
+      date: p.date,
+      marketCap: p.close * sharesOutstanding,
+    }));
 }

@@ -1,0 +1,36 @@
+COMPARE - EXPANDED METRICS UPDATE
+2026-01-30
+
+WHAT CHANGED
+Switched from income-statement endpoint to ratios-ttm endpoint. Added new financial metrics to the display.
+
+NEW METRICS
+- Operating Margin (TTM)
+- P/E Ratio
+- Beta
+- Free Cash Flow (TTM)
+
+Still showing: Market Cap, Revenue (TTM), Earnings (TTM)
+
+Dropped ROIC (would require 3rd API call to key-metrics-ttm endpoint).
+
+API CALLS (STILL 2 PER SEARCH)
+1. /stable/profile - company name, market cap, beta, price
+2. /stable/ratios-ttm - operating margin, P/E, FCF per share, revenue per share, earnings per share
+
+HOW TTM VALUES ARE CALCULATED
+The ratios-ttm endpoint returns per-share values. We calculate shares outstanding from (marketCap / price), then multiply per-share values to get absolute numbers.
+
+WHY THIS MATTERS
+- Same API cost (2 calls per search)
+- More metrics for users to compare
+- ratios-ttm is pre-calculated by FMP, so less math on our end
+- Revenue/earnings from ratios-ttm are already TTM (no need to sum 4 quarters)
+
+FILES CHANGED
+- lib/fmp.ts: Replaced getIncomeStatements with getRatiosTTM, updated CompanyDisplayData interface
+- components/CompanyCard.tsx: Added new metric displays, updated grid layout
+- app/page.tsx: Pass new props to CompanyCard
+
+CACHING CONSIDERATION
+ratios-ttm data updates daily (market cap, price-based ratios) but fundamentals like operating margin only change quarterly. Could cache aggressively.

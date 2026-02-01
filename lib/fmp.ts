@@ -1,0 +1,108 @@
+import type { CompanyProfile, SearchResult } from "@/types/financial";
+
+const BASE_URL = "https://financialmodelingprep.com/stable";
+
+function getApiKey(): string {
+  const key = process.env.FMP_API_KEY;
+  if (!key) {
+    throw new Error("FMP_API_KEY environment variable is not set");
+  }
+  return key;
+}
+
+export async function searchCompanies(query: string): Promise<SearchResult[]> {
+  const response = await fetch(
+    `${BASE_URL}/search-name?query=${encodeURIComponent(query)}&limit=10&apikey=${getApiKey()}`
+  );
+
+  if (!response.ok) {
+    throw new Error(`FMP API error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function getCompanyProfile(
+  symbol: string
+): Promise<CompanyProfile | null> {
+  const response = await fetch(
+    `${BASE_URL}/profile?symbol=${symbol.toUpperCase()}&apikey=${getApiKey()}`
+  );
+
+  if (!response.ok) {
+    throw new Error(`FMP API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data[0] || null;
+}
+
+interface RatiosTTM {
+  symbol: string;
+  operatingProfitMarginTTM: number;
+  priceToEarningsRatioTTM: number;
+  freeCashFlowPerShareTTM: number;
+  revenuePerShareTTM: number;
+  netIncomePerShareTTM: number;
+  debtToEquityRatioTTM: number;
+}
+
+export async function getRatiosTTM(symbol: string): Promise<RatiosTTM | null> {
+  const response = await fetch(
+    `${BASE_URL}/ratios-ttm?symbol=${symbol.toUpperCase()}&apikey=${getApiKey()}`
+  );
+
+  if (!response.ok) {
+    throw new Error(`FMP API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data[0] || null;
+}
+
+export interface CompanyDisplayData {
+  symbol: string;
+  companyName: string;
+  marketCap: number;
+  revenueTTM: number;
+  earningsTTM: number;
+  beta: number;
+  operatingMargin: number;
+  peRatio: number | null;
+  fcfTTM: number;
+  debtToEquity: number;
+}
+
+export async function getFullCompanyData(
+  symbol: string
+): Promise<CompanyDisplayData | null> {
+  const [profile, ratios] = await Promise.all([
+    getCompanyProfile(symbol),
+    getRatiosTTM(symbol),
+  ]);
+
+  if (!profile || !ratios) {
+    return null;
+  }
+
+  // Calculate shares outstanding from market cap and price
+  const sharesOutstanding = profile.marketCap / profile.price;
+
+  // Calculate absolute values from per-share data
+  const revenueTTM = ratios.revenuePerShareTTM * sharesOutstanding;
+  const earningsTTM = ratios.netIncomePerShareTTM * sharesOutstanding;
+  const fcfTTM = ratios.freeCashFlowPerShareTTM * sharesOutstanding;
+
+  return {
+    symbol: profile.symbol,
+    companyName: profile.companyName,
+    marketCap: profile.marketCap,
+    revenueTTM,
+    earningsTTM,
+    beta: profile.beta,
+    operatingMargin: ratios.operatingProfitMarginTTM,
+    peRatio: ratios.priceToEarningsRatioTTM || null,
+    fcfTTM,
+    debtToEquity: ratios.debtToEquityRatioTTM,
+  };
+}

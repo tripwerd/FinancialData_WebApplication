@@ -1,0 +1,38 @@
+COMPARE - INITIAL BUILD
+2026-01-30
+
+WHAT THIS IS
+A financial comparison app. Users search for a ticker and see market cap, revenue (TTM), and earnings (TTM). Dark mode, green theme, minimal UI.
+
+STACK
+Next.js 16, React 19, TypeScript, Tailwind CSS 4. Deployed on Vercel as serverless functions.
+
+HOW IT WORKS
+User submits a ticker. Frontend calls GET /api/search?q=TICKER. The API route (running on Vercel) makes two parallel calls to the FMP API: one for the company profile (market cap, name) and one for quarterly income statements (last 4 quarters). The server sums the 4 quarters to calculate TTM revenue and earnings, then returns a simplified JSON object. Frontend displays it in a CompanyCard component.
+
+FMP ENDPOINTS USED
+- /stable/profile?symbol=X - company name, market cap
+- /stable/income-statement?symbol=X&period=quarter&limit=4 - quarterly financials for TTM calc
+
+API USAGE
+Each search = 2 FMP calls. Free tier = 250 calls/day. No caching, so same ticker searched twice = 4 calls.
+
+KEY FILES
+- app/page.tsx: UI, search form, state management
+- app/api/search/route.ts: API endpoint, calls FMP, calculates TTM
+- lib/fmp.ts: FMP service layer, all external API logic
+- components/CompanyCard.tsx: displays ticker, name, market cap, revenue TTM, earnings TTM
+- types/financial.ts: TypeScript interfaces
+
+WHAT WE'RE NOT DOING YET
+- No caching (every search hits FMP fresh)
+- No rankings (FMP screener endpoint is paid-only)
+- No graphs or charts
+- No click-through to company detail pages
+- No comparison view (multiple companies side by side)
+
+ENV VARIABLES
+FMP_API_KEY stored in Vercel dashboard, never exposed to browser.
+
+DEPLOY
+Run `vercel --prod` from project root. Auto-builds and deploys.

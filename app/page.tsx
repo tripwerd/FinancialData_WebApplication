@@ -24,6 +24,10 @@ export default function Home() {
       const response = await fetch(
         `/api/search?q=${encodeURIComponent(ticker.trim())}`
       );
+      if (response.status === 429) {
+        setError("We've temporarily hit our API usage limit. Please try again later - this helps us keep the app free.");
+        return;
+      }
       if (!response.ok) {
         throw new Error("Failed to search");
       }

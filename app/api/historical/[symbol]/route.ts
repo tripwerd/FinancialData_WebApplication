@@ -24,6 +24,13 @@ export async function GET(
     return NextResponse.json(data);
   } catch (error) {
     console.error("Error fetching historical data:", error);
+    const errorMessage = error instanceof Error ? error.message : "";
+    if (errorMessage.includes("429")) {
+      return NextResponse.json(
+        { error: "rate_limit" },
+        { status: 429 }
+      );
+    }
     return NextResponse.json(
       { error: "Failed to fetch historical data" },
       { status: 500 }

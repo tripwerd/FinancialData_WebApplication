@@ -60,6 +60,11 @@ export default function ComparisonChart({
           fetch(`/api/historical/${symbol2}?mode=${apiMode}`),
         ]);
 
+        if (res1.status === 429 || res2.status === 429) {
+          setError("We've temporarily hit our API usage limit. Please try again later - this helps us keep the app free.");
+          return;
+        }
+
         if (!res1.ok || !res2.ok) {
           throw new Error("Failed to fetch historical data");
         }

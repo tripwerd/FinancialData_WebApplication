@@ -71,6 +71,10 @@ export default function CompanyCard({
       const response = await fetch(
         `/api/search?q=${encodeURIComponent(compareSymbol.trim())}`
       );
+      if (response.status === 429) {
+        setCompareError("We've temporarily hit our API usage limit. Please try again later - this helps us keep the app free.");
+        return;
+      }
       if (!response.ok) throw new Error("Failed to search");
 
       const data = await response.json();

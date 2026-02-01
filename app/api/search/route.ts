@@ -20,6 +20,13 @@ export async function GET(request: Request) {
     return NextResponse.json(company);
   } catch (error) {
     console.error("Error searching for ticker:", error);
+    const errorMessage = error instanceof Error ? error.message : "";
+    if (errorMessage.includes("429")) {
+      return NextResponse.json(
+        { error: "rate_limit" },
+        { status: 429 }
+      );
+    }
     return NextResponse.json(
       { error: "Failed to search for ticker" },
       { status: 500 }

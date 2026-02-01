@@ -53,6 +53,10 @@ export async function getRatiosTTM(symbol: string): Promise<RatiosTTM | null> {
   );
 
   if (!response.ok) {
+    // Return null for 402 (payment required) - data not available on current tier
+    if (response.status === 402) {
+      return null;
+    }
     throw new Error(`FMP API error: ${response.status}`);
   }
 
@@ -71,18 +75,40 @@ export interface CompanyDisplayData {
   peRatio: number | null;
   fcfTTM: number;
   debtToEquity: number;
+  isLimited?: false;
 }
+
+export interface LimitedCompanyData {
+  symbol: string;
+  companyName: string;
+  marketCap: number;
+  beta: number;
+  isLimited: true;
+}
+
+export type CompanyData = CompanyDisplayData | LimitedCompanyData;
 
 export async function getFullCompanyData(
   symbol: string
-): Promise<CompanyDisplayData | null> {
+): Promise<CompanyData | null> {
   const [profile, ratios] = await Promise.all([
     getCompanyProfile(symbol),
     getRatiosTTM(symbol),
   ]);
 
-  if (!profile || !ratios) {
+  if (!profile) {
     return null;
+  }
+
+  // If ratios aren't available, return limited data
+  if (!ratios) {
+    return {
+      symbol: profile.symbol,
+      companyName: profile.companyName,
+      marketCap: profile.marketCap,
+      beta: profile.beta,
+      isLimited: true,
+    };
   }
 
   // Calculate shares outstanding from market cap and price
@@ -104,6 +130,7 @@ export async function getFullCompanyData(
     peRatio: ratios.priceToEarningsRatioTTM || null,
     fcfTTM,
     debtToEquity: ratios.debtToEquityRatioTTM,
+    isLimited: false,
   };
 }
 

@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import CompanyCard from "@/components/CompanyCard";
-import type { CompanyDisplayData } from "@/lib/fmp";
+import LimitedCompanyCard from "@/components/LimitedCompanyCard";
+import type { CompanyData } from "@/lib/fmp";
 
 export default function Home() {
   const [ticker, setTicker] = useState("");
-  const [company, setCompany] = useState<CompanyDisplayData | null>(null);
+  const [company, setCompany] = useState<CompanyData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
@@ -74,7 +75,15 @@ export default function Home() {
           {error && searched && (
             <p className="text-center text-text-muted">{error}</p>
           )}
-          {company && (
+          {company && company.isLimited && (
+            <LimitedCompanyCard
+              symbol={company.symbol}
+              companyName={company.companyName}
+              marketCap={company.marketCap}
+              beta={company.beta}
+            />
+          )}
+          {company && !company.isLimited && (
             <CompanyCard
               symbol={company.symbol}
               companyName={company.companyName}

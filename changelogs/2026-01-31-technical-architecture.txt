@@ -1,0 +1,70 @@
+COMPARE - TECHNICAL ARCHITECTURE
+2026-01-31
+
+STACK
+- Next.js 16 (App Router, Turbopack)
+- React 19
+- TypeScript
+- Tailwind CSS v4 (with @theme for custom colors)
+- Recharts (charting)
+
+DATA SUPPLIER
+Financial Modeling Prep (FMP) API - https://financialmodelingprep.com
+- Free tier: ~87 major stocks have full data, others limited to profile only
+- Rate limit: 250 calls/day, 429 error when exceeded
+
+FMP ENDPOINTS USED
+1. /stable/profile?symbol=X - Company basics (name, price, market cap, beta)
+2. /stable/ratios-ttm?symbol=X - Financial ratios (P/E, margins, FCF, debt/equity)
+3. /stable/historical-price-eod/full?symbol=X - Daily price history (5+ years)
+4. /stable/historical-market-capitalization?symbol=X - Exact market cap history (~3 months on free tier)
+
+APP API ROUTES
+GET /api/search?q=TICKER
+- Calls profile + ratios-ttm
+- Returns full data or limited data (isLimited: true) if ratios unavailable (402)
+
+GET /api/historical/[symbol]?mode=estimated|exact
+- estimated (default): Calculates market cap from price * shares outstanding (10 years)
+- exact: Uses direct market cap endpoint (3 months on free tier)
+
+KEY TECHNICAL DECISIONS
+
+1. Comparison uses historical endpoint only (not search)
+   When user enters a comparison ticker, we only validate it exists via /api/search,
+   then fetch /api/historical for the chart. We don't need full company data for the
+   comparison company - saves 2 API calls per comparison.
+
+2. Market cap estimation from price
+   Free tier only provides ~3 months of historical market cap. We calculate 10-year
+   history as: historical_price * (current_market_cap / current_price). This uses
+   current shares outstanding as a proxy - not perfectly accurate due to splits/buybacks,
+   but sufficient for trend comparison. Labeled as "(Estimation)" in UI.
+
+3. LimitedCompanyCard for non-premium tickers
+   Companies outside FMP's ~87 premium tickers return 402 on ratios endpoint. We
+   gracefully degrade to showing only profile data (market cap, beta) with N/A for
+   other metrics. App doesn't break on downgrade.
+
+4. Tailwind v4 @theme block
+   Custom colors defined in @theme {} block in globals.css, enabling native utility
+   classes (bg-green-primary) instead of arbitrary values (bg-[var(--green-primary)]).
+   Required for Tailwind v4 compatibility.
+
+5. Rate limit UX
+   429 errors show friendly message: "We've temporarily hit our API usage limit.
+   Please try again later - this helps us keep the app free."
+
+COMPONENT STRUCTURE
+- page.tsx: Main search, renders CompanyCard or LimitedCompanyCard based on isLimited
+- CompanyCard: Full metrics, expandable, Compare button triggers chart
+- LimitedCompanyCard: Partial metrics (market cap, beta only), no compare
+- ComparisonChart: Recharts line chart with 3M/10Y toggle
+
+DATA FLOW
+1. User searches ticker → /api/search → profile + ratios
+2. If ratios 402 → return limited data → LimitedCompanyCard
+3. If ratios OK → return full data → CompanyCard
+4. User clicks Compare → enters second ticker → validate via /api/search
+5. Chart fetches /api/historical for both symbols (mode based on toggle)
+6. Chart merges data by date, filters to overlapping dates, samples for smoothness

@@ -147,16 +147,6 @@ export default function ComparisonChart({
       <div className="mb-4 flex items-center gap-3">
         <div className="flex rounded-lg border border-card-border overflow-hidden">
           <button
-            onClick={() => setMode("10Y")}
-            className={`px-3 py-1 text-sm font-medium transition-colors ${
-              mode === "10Y"
-                ? "bg-green-primary text-black"
-                : "bg-card-bg text-text-muted hover:text-foreground"
-            }`}
-          >
-            10Y
-          </button>
-          <button
             onClick={() => setMode("3M")}
             className={`px-3 py-1 text-sm font-medium transition-colors ${
               mode === "3M"
@@ -165,6 +155,16 @@ export default function ComparisonChart({
             }`}
           >
             3M
+          </button>
+          <button
+            onClick={() => setMode("10Y")}
+            className={`px-3 py-1 text-sm font-medium transition-colors ${
+              mode === "10Y"
+                ? "bg-green-primary text-black"
+                : "bg-card-bg text-text-muted hover:text-foreground"
+            }`}
+          >
+            10Y
           </button>
         </div>
         {mode === "10Y" && (
@@ -200,9 +200,9 @@ export default function ComparisonChart({
                 borderRadius: "8px",
               }}
               labelStyle={{ color: "#e5e5e5" }}
-              formatter={(value) => [
+              formatter={(value, name) => [
                 formatMarketCap(value as number),
-                "",
+                name,
               ]}
               labelFormatter={(label) => {
                 const date = new Date(label);

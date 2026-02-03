@@ -1,0 +1,120 @@
+YARDSTICK - SECTOR FILTERING UPDATE
+2026-02-01
+
+SUMMARY
+Added sector/category-based filtering with 13 horizontal scrollable chips. Replaced
+hardcoded ticker list with dynamic FMP screener API. Companies now load lazily per
+sector with client-side caching.
+
+NEW FMP ENDPOINT USED
+/stable/company-screener
+- Filters by industry (comma-separated for multiple)
+- Sorts by marketCap descending
+- Excludes ETFs and funds (isEtf=false&isFund=false)
+- Returns: symbol, companyName, marketCap, sector, industry, beta, price
+- Does NOT return: revenue, earnings, P/E, FCF, margins (requires separate calls)
+
+NEW APP API ROUTE
+GET /api/top-companies?limit=N&industries=X,Y,Z
+- Step 1: Calls FMP screener to get top N companies by market cap (1 API call)
+- Step 2: Fetches full company data for each via getFullCompanyData (N API calls)
+- Returns full CompanyData[] with all metrics
+- Batches profile+ratios calls in groups of 10 to avoid overwhelming server
+
+SECTOR CATEGORIES (13 total)
+1. All (50 companies, no filter)
+2. Technology (8 industries)
+3. Financial Services (22 industries)
+4. Food & Beverage (6 industries)
+5. Manufacturing (22 industries)
+6. Transportation (10 industries)
+7. Consumer Products (16 industries)
+8. Media & Communications (8 industries)
+9. Utilities & Energy Infrastructure (15 industries)
+10. Real Estate & Infrastructure (15 industries)
+11. Healthcare & Life Sciences (13 industries)
+12. Natural Resources (11 industries)
+13. Business & Professional Services (9 industries)
+
+All non-"All" sectors display 10 companies each.
+
+KEY TECHNICAL DECISIONS
+
+1. Two-call architecture for full metrics
+   Screener endpoint only provides basic data (market cap, beta, price). To display
+   full metrics (revenue, earnings, P/E, FCF, margins), we make a second round of
+   calls to profile+ratios for each company. This doubles API usage but maintains
+   feature parity with the original CompanyCard display.
+
+2. Client-side sector caching
+   - loadedSectors: Set<SectorKey> tracks which sectors have been fetched
+   - sectorCompanies: Record<SectorKey, CompanyData[]> stores fetched data
+   - Switching back to a previously loaded sector is instant (no API calls)
+   - Cache clears on page refresh
+TRIP NOTE: there is also LRU cache stores up to 20 symbols:                                                                                                                                                                    
+    - Fetches market cap + financials together on first load (this is the chart data)                                                                                                                                               
+
+3. Lazy loading per sector
+   Companies only fetch when user clicks a sector chip. Initial page load shows
+   empty list until "All" sector loads. This reduces initial API burden.
+
+4. Comma-separated industry filter
+   FMP screener accepts multiple industries in one call: industry=X,Y,Z
+   This allows custom sector groupings (e.g., "Technology" = 8 different FMP
+   industries) without multiplying API calls per industry.
+
+5. Horizontal scroll chips
+   With 13 categories, chips would wrap on mobile. Using overflow-x-auto with
+   scrollbar-hide CSS utility allows horizontal scrolling without visible scrollbar.
+   shrink-0 prevents chips from compressing.
+
+DATA FLOW
+1. User clicks sector chip → check if sector in loadedSectors
+2. If cached → instantly set companies from sectorCompanies[sector]
+3. If not cached:
+   a. Build industries param from SECTORS[sector].industries
+   b. Call /api/top-companies?limit=10&industries=X,Y,Z
+   c. API calls screener (1 call) then fetches full data (10 calls)
+   d. Cache result in sectorCompanies, add to loadedSectors
+   e. Display companies
+
+FILES CHANGED
+- lib/fmp.ts: Added getTopCompaniesByMarketCap() screener function
+- app/api/top-companies/route.ts: New endpoint for sector-filtered companies
+- app/page.tsx: Replaced hardcoded tickers with SECTORS config and chips UI
+- app/globals.css: Added scrollbar-hide utility class
+
+API CALL EFFICIENCY
+- "All" sector: 1 screener + 50 profile/ratios = 51 calls
+- Other sectors: 1 screener + 10 profile/ratios = 11 calls each
+- Cached sectors: 0 calls (instant)
+
+---
+
+UPDATE 2 - UX IMPROVEMENTS
+
+CHANGES
+1. Search clears home page lists
+   - When user enters a search, sector chips and company list are hidden
+   - Cache is preserved, so returning shows instant results
+
+2. Excluded tickers from screener
+   - HONIV (expired stock) and GOOGL (redundant with GOOG) filtered out
+   - API requests extra results to account for exclusions
+
+3. Category adjustments
+   - GOOG: Added "Internet Content & Information" to Technology (was in Media & Communications)
+   - ABNB: Moved "Travel Services" and "Travel Lodging" to Transportation
+   - Renamed "Transportation" to "Travel & Transportation"
+
+4. Comparison suggestion chips
+   - When expanding a company card, shows hollow chips with top 5 other companies from current list
+   - Clicking a chip instantly loads comparison (no API call needed for validation)
+   - Custom ticker input moved below with placeholder "Or, enter a different ticker"
+   - Button changed from "Compare" to "Go"
+
+5. Chart data caching
+   - LRU cache stores up to 20 symbols' historical data
+   - Fetches both market cap and financials data together on first load
+   - Switching metrics (Market Cap/Revenue/Earnings) uses cached data
+   - Comparing previously-viewed companies is instant

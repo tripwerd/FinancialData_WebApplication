@@ -1,0 +1,48 @@
+COMPARE - COMPARISON CHARTS UPDATE
+2026-01-30
+
+WHAT CHANGED
+Added expandable company cards and market cap comparison charts.
+
+NEW UX FLOW
+1. Search for a ticker → see collapsed card (Market Cap, Revenue, Earnings)
+2. Click card (+) → expands to show all 8 metrics + "Compare" button
+3. Click Compare → enter second ticker
+4. Chart loads showing 5-year historical market cap for both companies overlaid
+
+COMPANY CARD STATES
+- Collapsed: symbol, name, market cap, revenue (TTM), earnings (TTM)
+- Expanded: adds FCF, operating margin, P/E, beta, debt/equity + Compare button
+- Comparing: shows search bar for second ticker, then chart
+
+API CALLS FOR COMPARISON
+- First company: 2 calls (profile + ratios-ttm) - already fetched from search
+- Second company verification: 2 calls (profile + ratios-ttm)
+- Historical data: 2 calls (1 per company to /historical-market-capitalization)
+- Total for full comparison: 4-6 calls depending on flow
+
+NEW ENDPOINT
+GET /api/historical/[symbol]
+- Returns 5 years of daily market cap data
+- Calls FMP /stable/historical-market-capitalization
+- Data filtered to last 5 years, sampled every 5 days for chart smoothness
+
+NEW FILES
+- components/ComparisonChart.tsx: Recharts line chart component
+- app/api/historical/[symbol]/route.ts: Historical data API route
+
+DEPENDENCIES ADDED
+- recharts: React charting library
+
+CHART DETAILS
+- Green line: first company (primary)
+- Blue line: second company (comparison)
+- X-axis: date (MM/YY format)
+- Y-axis: market cap (formatted as $XT, $XB)
+- Tooltip shows exact date and values
+- Legend shows company symbols
+
+LIMITATIONS
+- Only 2 companies can be compared at once
+- Only market cap comparison (no revenue/earnings history without additional API calls)
+- No time period toggle (fixed at 5 years)

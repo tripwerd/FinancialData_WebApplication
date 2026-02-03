@@ -1,0 +1,122 @@
+YARDSTICK - TECHNICAL ARCHITECTURE
+2026-02-01 (Market Cap Update)
+
+STACK
+- Next.js 16 (App Router, Turbopack)
+- React 19
+- TypeScript
+- Tailwind CSS v4 (with @theme for custom colors)
+- Recharts (charting)
+
+DATA SUPPLIER
+Financial Modeling Prep (FMP) API - https://financialmodelingprep.com
+- Paid tier in use
+- Rate limit handling: 429 errors show user-friendly message
+
+FMP ENDPOINTS USED
+1. /stable/profile?symbol=X - Company basics (name, price, market cap, beta)
+2. /stable/ratios-ttm?symbol=X - Financial ratios (P/E, margins, FCF, debt/equity, revenue/earnings per share)
+3. /stable/historical-market-capitalization?symbol=X&from=DATE&to=DATE&limit=5000 - Exact historical market cap (5 years)
+4. /stable/income-statement?symbol=X&period=quarterly&limit=40 - Quarterly income statements (~10 years)
+
+APP API ROUTES
+GET /api/search?q=TICKER
+- Calls profile + ratios-ttm in parallel
+- Returns full data or limited data (isLimited: true) if ratios unavailable (402)
+- Used for: initial search, comparison ticker validation
+
+GET /api/historical/[symbol]
+- Calls historical-market-capitalization with from/to params for 5Y range
+- Returns exact historical market cap data (daily granularity)
+- Used for: Market Cap comparison charts
+- NOTE: Previous version used estimated market cap (price × shares). Now uses FMP's exact data.
+
+GET /api/historical-financials/[symbol]
+- Calls income-statement endpoint with period=quarterly, limit=40
+- Returns: { symbol, date, revenue, netIncome } for each quarter
+- Used for: Revenue and Earnings comparison charts
+
+KEY TECHNICAL DECISIONS
+
+1. Exact historical market cap instead of estimation
+   Previous: Calculated market cap as historical_price × current_shares_outstanding
+   Problem: Shares outstanding changes over time (splits, buybacks, issuances), making estimation inaccurate
+   Solution: Use FMP's /stable/historical-market-capitalization endpoint with from/to date params
+   Result: Accurate historical market cap that accounts for share count changes
+   Why: User requested investigation into more reliable market cap data
+
+2. Removed 3M/5Y toggle - always 5Y
+   Previous: Toggle between 3M (exact) and 5Y (estimated)
+   Change: Always show 5Y using exact historical market cap
+   Reason: With exact data available for 5Y, no need for the 3M option
+   Why: User requested removal of toggle
+
+3. Chart visible by default when card expanded
+   Previous: Expand card → see Compare button → click to enter compare mode → see chart
+   Change: Expand card → chart immediately visible (single company) → Compare button below
+   Reason: Reduces clicks to see data, chart is the primary value
+   Why: User requested chart be default open with market cap selected
+
+4. ComparisonChart supports single company view
+   symbol2 prop is now optional
+   When no comparison company selected, chart shows only the primary company's data
+   Second line only renders when symbol2 is provided
+
+5. Unified compare button location
+   Previous: "Compare" button in one location, "Compare New Company" button in different location
+   Change: Both buttons now appear in same position below chart
+   States:
+   - Not comparing: Green "Compare" button
+   - Comparing (entering ticker): Search input + "Compare" submit button
+   - Comparison active: Green "Compare New Company" button
+   Why: User requested buttons live in same place
+
+6. Removed Close button
+   Previous: "Close" button to exit comparison mode
+   Change: Click card header to collapse (closes comparison automatically)
+   Reason: Simplifies UI, header click already served this purpose
+   Why: User requested no more close button
+
+7. Calendar quarter normalization for Revenue/Earnings charts
+   Companies have different fiscal year ends (e.g., NVDA: Oct/Jul/Apr, AAPL: Dec/Sep/Jun)
+   Solution: Normalize fiscal quarters to calendar quarters (Q1=Jan-Mar, Q2=Apr-Jun, etc.)
+   Allows meaningful comparison even when fiscal calendars differ
+
+DATA LOADING BEHAVIOR
+ComparisonChart fetches data when these dependencies change:
+- symbol1 (primary company)
+- symbol2 (comparison company)
+- metric (Market Cap / Revenue / Earnings)
+
+Current behavior:
+- Each metric change triggers a new fetch
+- No client-side caching - switching Market Cap → Revenue → Market Cap fetches market cap twice
+- Different endpoints per metric type:
+  - Market Cap: /api/historical/{symbol}
+  - Revenue/Earnings: /api/historical-financials/{symbol}
+
+COMPONENT STRUCTURE
+- app/page.tsx: Homepage with search, sort controls, company list, sidebar menu
+- components/CompanyCard.tsx: Full metrics card with expand/collapse, chart, compare controls, Advanced section
+- components/LimitedCompanyCard.tsx: Partial metrics (market cap, beta only), no compare
+- components/ComparisonChart.tsx: Recharts line chart, supports single or dual company view
+- lib/fmp.ts: All FMP API wrapper functions
+- app/api/*/route.ts: Next.js API routes that call FMP
+
+UI FLOW
+1. User clicks company card → expands
+2. Chart loads showing primary company's market cap (5Y)
+3. Green "Compare" button visible below chart
+4. User clicks Compare → search input appears (chart stays visible)
+5. User enters ticker, clicks Compare → chart updates with both companies
+6. "Compare New Company" button replaces search input
+7. User clicks card header → collapses everything, resets comparison state
+
+API CALL SUMMARY
+| Action                    | FMP Calls |
+|---------------------------|-----------|
+| Load homepage (50 co.)    | 100 (profile + ratios × 50) |
+| Expand card (view chart)  | 1 (historical-market-cap) |
+| Compare - Market Cap      | 1 (historical-market-cap for company 2) |
+| Switch to Revenue/Earnings| 2 (income-statement × 2) |
+| Compare New Company       | 1 (historical for new company, reuses primary) |

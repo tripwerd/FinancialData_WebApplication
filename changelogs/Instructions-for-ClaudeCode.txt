@@ -1,0 +1,3 @@
+Please create a new text file to go in this changelogs folder. It should outline the technical architecture of the app as it stands at the time of you pushing this update. Your new text file should be structurally similar to the other text files in this folder, but make sure it answers the question: “If you had to describe to a developer how this app was architected, what would you say? who are we using as suppliers, what calls/endpoints, what data from those endpoints, and when is which data from those endpoints used? Any technical features/structures of note? etc.” also, in cases where i specified, i want you to mention why those technical decisions were made.
+
+To push to prod, we use vercel and the command vercel --prod, but first make sure to also push to GitHub

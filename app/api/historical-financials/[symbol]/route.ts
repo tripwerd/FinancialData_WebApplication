@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getExactHistoricalMarketCap } from "@/lib/fmp";
+import { getHistoricalIncomeStatement } from "@/lib/fmp";
 
 export async function GET(
   request: Request,
@@ -8,7 +8,7 @@ export async function GET(
   try {
     const { symbol } = await params;
 
-    const data = await getExactHistoricalMarketCap(symbol, 5);
+    const data = await getHistoricalIncomeStatement(symbol);
 
     if (!data || data.length === 0) {
       return NextResponse.json(
@@ -19,7 +19,7 @@ export async function GET(
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching historical data:", error);
+    console.error("Error fetching historical financials:", error);
     const errorMessage = error instanceof Error ? error.message : "";
     if (errorMessage.includes("429")) {
       return NextResponse.json(

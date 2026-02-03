@@ -1,0 +1,111 @@
+YARDSTICK - TECHNICAL ARCHITECTURE
+2026-02-01
+
+STACK
+- Next.js 16 (App Router, Turbopack)
+- React 19
+- TypeScript
+- Tailwind CSS v4 (with @theme for custom colors)
+- Recharts (charting)
+
+DATA SUPPLIER
+Financial Modeling Prep (FMP) API - https://financialmodelingprep.com
+- Paid tier in use (no longer free tier)
+- Rate limit: Higher than free tier, 429 error handling still in place
+
+FMP ENDPOINTS USED
+1. /stable/profile?symbol=X - Company basics (name, price, market cap, beta)
+2. /stable/ratios-ttm?symbol=X - Financial ratios (P/E, margins, FCF, debt/equity, revenue/earnings per share)
+3. /stable/historical-price-eod/full?symbol=X - Daily price history (~5 years available)
+4. /stable/historical-market-capitalization?symbol=X - Exact market cap history (~3 months)
+5. /stable/income-statement?symbol=X&period=quarterly - Quarterly income statements (~10 years, 40 quarters)
+
+APP API ROUTES
+GET /api/search?q=TICKER
+- Calls profile + ratios-ttm in parallel
+- Returns full data or limited data (isLimited: true) if ratios unavailable (402)
+- Used for: initial search, comparison ticker validation
+
+GET /api/historical/[symbol]?mode=estimated|exact
+- estimated (default): Calculates market cap from price * shares outstanding (~5 years)
+- exact: Uses direct market cap endpoint (~3 months)
+- Used for: Market Cap comparison charts
+
+GET /api/historical-financials/[symbol]
+- Calls income-statement endpoint with period=quarterly, limit=40
+- Returns: { symbol, date, revenue, netIncome } for each quarter
+- Used for: Revenue and Earnings comparison charts
+
+GET /api/company/[symbol]
+- Exists but currently unused in frontend
+
+HOMEPAGE DATA FLOW
+1. On load, fetches 50 hardcoded top companies (DEFAULT_TICKERS array)
+2. Fetches in batches of 10 to avoid overwhelming server
+3. Progressive loading: companies appear as batches complete
+4. Sortable by 8 metrics: Market Cap, Revenue, Earnings, FCF, Op. Margin, P/E, Beta, Debt/Equity
+
+COMPARISON CHART FEATURES
+- Metric toggle: Market Cap | Revenue | Earnings
+- Time range toggle (Market Cap only): 3M | 5Y
+- Revenue/Earnings show quarterly data (~10 years)
+
+KEY TECHNICAL DECISIONS
+
+1. Calendar quarter normalization for Revenue/Earnings charts
+   Problem: Companies have different fiscal year ends (e.g., NVDA: Oct/Jul/Apr, AAPL: Dec/Sep/Jun).
+   Exact date matching would result in no overlapping data points.
+   Solution: Normalize fiscal quarters to calendar quarters (Q1=Jan-Mar, Q2=Apr-Jun, etc.).
+   This allows comparison even when fiscal calendars differ.
+
+2. 5Y label instead of 10Y
+   The FMP historical-price-eod endpoint only returns ~5 years of data, not 10.
+   Label updated to accurately reflect available data range.
+
+3. Hardcoded company list vs. screener
+   Considered using FMP's /stable/company-screener endpoint for dynamic list.
+   Screener only provides marketCap and beta - would still need ratios-ttm for other metrics.
+   Decision: Keep hardcoded list of 50 top companies to ensure consistent, full data.
+   Trade-off: List doesn't auto-update, but guarantees all 8 metrics available.
+
+4. Revenue/Earnings from ratios-ttm (per-share × shares)
+   Current: Revenue/Earnings calculated from revenuePerShareTTM * sharesOutstanding
+   Considered: Switching to income-statement for exact TTM values
+   Decision: Keep ratios-ttm for card display (1 call), income-statement for historical charts only
+   Reason: Avoids adding a third API call per company on initial load
+
+5. Advanced metrics section
+   FCF, Operating Margin, P/E, Beta, Debt/Equity moved to collapsible "Advanced" section.
+   Core metrics (Market Cap, Revenue, Earnings) always visible.
+   Decision: Reduces visual clutter, focuses on the 3 chartable metrics.
+
+6. Sidebar navigation
+   Hamburger menu opens full-height sidebar from left (not dropdown).
+   Includes overlay that closes menu on click.
+   Pages: Home, About (placeholder), Support (placeholder)
+
+COMPONENT STRUCTURE
+- app/page.tsx: Homepage with search, sort controls, company list, sidebar menu
+- app/about/page.tsx: Placeholder About page
+- app/support/page.tsx: Placeholder Support page
+- components/CompanyCard.tsx: Full metrics card with expand/collapse, Advanced section, Compare mode
+- components/LimitedCompanyCard.tsx: Partial metrics (market cap, beta only), no compare
+- components/ComparisonChart.tsx: Recharts line chart with metric toggle (Market Cap/Revenue/Earnings)
+- lib/fmp.ts: All FMP API wrapper functions
+- app/api/*/route.ts: Next.js API routes that call FMP
+
+UI/UX NOTES
+- Branding: "Yardstick" with tagline "Measure companies with ease"
+- All buttons have cursor-pointer on hover
+- Entire collapsed CompanyCard is clickable to expand/collapse
+- Clicking card header during comparison closes comparison and collapses card
+- Compare button text: "Compare" (not "Compare Market Caps")
+- Chart tooltip sorts companies by value (highest first) at each data point
+
+API CALL SUMMARY
+| Action                    | FMP Calls |
+|---------------------------|-----------|
+| Load homepage (50 co.)    | 100 (profile + ratios × 50) |
+| Search 1 company          | 2 (profile + ratios) |
+| Compare - Market Cap      | 2-4 (profile + prices × 2, or exact × 2) |
+| Compare - Revenue/Earnings| 2 (income-statement × 2) |

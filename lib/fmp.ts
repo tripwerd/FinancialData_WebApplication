@@ -217,6 +217,62 @@ export async function getExactHistoricalMarketCap(
   return data || [];
 }
 
+// Get full historical market cap (all available history, with pagination if needed)
+export async function getFullHistoricalMarketCap(
+  symbol: string
+): Promise<HistoricalMarketCap[]> {
+  const toStr = new Date().toISOString().split("T")[0];
+  const fromStr = "1900-01-01";
+
+  // First request - gets most recent 5000 records
+  const response = await fetch(
+    `${BASE_URL}/historical-market-capitalization?symbol=${symbol.toUpperCase()}&from=${fromStr}&to=${toStr}&limit=5000&apikey=${getApiKey()}`
+  );
+
+  if (!response.ok) {
+    if (response.status === 402) {
+      return [];
+    }
+    throw new Error(`FMP API error: ${response.status}`);
+  }
+
+  const data: HistoricalMarketCap[] = await response.json();
+  if (!data || data.length === 0) {
+    return [];
+  }
+
+  // If we got less than 5000 records, we have all the data
+  if (data.length < 5000) {
+    return data;
+  }
+
+  // Otherwise, we need to fetch older data
+  // The data is sorted newest first, so the oldest date is at the end
+  const oldestDate = data[data.length - 1].date;
+
+  // Fetch older data (from 1900 to the oldest date we have)
+  const olderResponse = await fetch(
+    `${BASE_URL}/historical-market-capitalization?symbol=${symbol.toUpperCase()}&from=${fromStr}&to=${oldestDate}&limit=5000&apikey=${getApiKey()}`
+  );
+
+  if (!olderResponse.ok) {
+    // If second request fails, return what we have
+    return data;
+  }
+
+  const olderData: HistoricalMarketCap[] = await olderResponse.json();
+  if (!olderData || olderData.length === 0) {
+    return data;
+  }
+
+  // Combine and dedupe (the oldest date might be in both responses)
+  const allDates = new Set(data.map((d) => d.date));
+  const uniqueOlderData = olderData.filter((d) => !allDates.has(d.date));
+
+  // Return combined data, sorted newest first
+  return [...data, ...uniqueOlderData];
+}
+
 // Backwards compatibility
 export async function getHistoricalMarketCap(
   symbol: string,

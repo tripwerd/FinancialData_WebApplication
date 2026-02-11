@@ -35,6 +35,7 @@ interface ChartData {
 }
 
 type ChartMetric = "marketCap" | "revenue" | "earnings";
+type TimeRange = "all" | "5year" | "1month";
 
 // Chart data cache with LRU-style eviction
 const CACHE_MAX_SIZE = 20;
@@ -98,6 +99,7 @@ export default function ComparisonChart({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [metric, setMetric] = useState<ChartMetric>("marketCap");
+  const [timeRange, setTimeRange] = useState<TimeRange>("5year");
 
   useEffect(() => {
     async function fetchDataForSymbol(sym: string): Promise<CacheValue> {
@@ -138,9 +140,30 @@ export default function ComparisonChart({
         const data2 = results[1] || null;
 
         if (metric === "marketCap") {
+          // Filter data by time range
+          const now = new Date();
+          let cutoffDate: Date;
+
+          if (timeRange === "1month") {
+            cutoffDate = new Date(now);
+            cutoffDate.setMonth(cutoffDate.getMonth() - 1);
+          } else if (timeRange === "5year") {
+            cutoffDate = new Date(now);
+            cutoffDate.setFullYear(cutoffDate.getFullYear() - 5);
+          } else {
+            // "all" - use earliest possible date
+            cutoffDate = new Date("1900-01-01");
+          }
+
+          const filterByTimeRange = (data: HistoricalData[]) =>
+            data.filter((d) => new Date(d.date) >= cutoffDate);
+
+          const filtered1 = filterByTimeRange(data1.marketCap);
+          const filtered2 = data2 ? filterByTimeRange(data2.marketCap) : [];
+
           const dateMap = new Map<string, ChartData>();
 
-          data1.marketCap.forEach((d) => {
+          filtered1.forEach((d) => {
             dateMap.set(d.date, {
               date: d.date,
               [symbol1]: d.marketCap,
@@ -148,7 +171,7 @@ export default function ComparisonChart({
           });
 
           if (data2 && symbol2) {
-            data2.marketCap.forEach((d) => {
+            filtered2.forEach((d) => {
               const existing = dateMap.get(d.date);
               if (existing) {
                 existing[symbol2] = d.marketCap;
@@ -161,12 +184,23 @@ export default function ComparisonChart({
             });
           }
 
+          // Show all data points (not just overlap) - each company shows from their data start
           const combined = Array.from(dateMap.values())
-            .filter((d) => symbol2 ? (d[symbol1] && d[symbol2]) : d[symbol1])
+            .filter((d) => d[symbol1] || (symbol2 && d[symbol2]))
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-          // Sample every 5th data point for 5Y view to reduce chart density
-          const sampled = combined.filter((_, i) => i % 5 === 0);
+          // Adjust sampling based on data volume
+          let sampleRate: number;
+          if (timeRange === "1month") {
+            sampleRate = 1; // Show all points for 1 month (~22 points)
+          } else if (timeRange === "5year") {
+            sampleRate = 5; // Every 5th point (~250 points)
+          } else {
+            // "all" - adjust based on actual data size
+            sampleRate = Math.max(1, Math.floor(combined.length / 500));
+          }
+
+          const sampled = combined.filter((_, i) => i % sampleRate === 0);
 
           setChartData(sampled);
         } else {
@@ -215,7 +249,7 @@ export default function ComparisonChart({
     }
 
     fetchData();
-  }, [symbol1, symbol2, metric]);
+  }, [symbol1, symbol2, metric, timeRange]);
 
   if (loading) {
     return (
@@ -278,6 +312,45 @@ export default function ComparisonChart({
           </button>
         </div>
       </div>
+
+      {/* Time range toggle - only for Market Cap */}
+      {metric === "marketCap" && (
+        <div className="mb-4 flex items-center gap-2">
+          <span className="text-sm text-text-muted">Range:</span>
+          <div className="flex rounded-lg border border-card-border overflow-hidden">
+            <button
+              onClick={() => setTimeRange("all")}
+              className={`cursor-pointer px-2 py-1 text-xs font-medium transition-colors ${
+                timeRange === "all"
+                  ? "bg-green-primary text-black"
+                  : "bg-card-bg text-text-muted hover:text-foreground"
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setTimeRange("5year")}
+              className={`cursor-pointer px-2 py-1 text-xs font-medium transition-colors ${
+                timeRange === "5year"
+                  ? "bg-green-primary text-black"
+                  : "bg-card-bg text-text-muted hover:text-foreground"
+              }`}
+            >
+              5Y
+            </button>
+            <button
+              onClick={() => setTimeRange("1month")}
+              className={`cursor-pointer px-2 py-1 text-xs font-medium transition-colors ${
+                timeRange === "1month"
+                  ? "bg-green-primary text-black"
+                  : "bg-card-bg text-text-muted hover:text-foreground"
+              }`}
+            >
+              1M
+            </button>
+          </div>
+        </div>
+      )}
 
 
       {/* Quarterly label for revenue/earnings */}

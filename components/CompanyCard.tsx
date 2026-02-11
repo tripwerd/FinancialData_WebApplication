@@ -17,17 +17,17 @@ interface CompanyCardProps {
   suggestedTickers?: string[];
 }
 
-function formatCurrency(num: number): string {
+function formatCurrency(num: number, maxDecimals: number = 2): string {
   const absNum = Math.abs(num);
   const sign = num < 0 ? "-" : "";
   if (absNum >= 1e12) {
-    return `${sign}$${(absNum / 1e12).toFixed(2)}T`;
+    return `${sign}$${(absNum / 1e12).toFixed(maxDecimals)}T`;
   }
   if (absNum >= 1e9) {
-    return `${sign}$${(absNum / 1e9).toFixed(2)}B`;
+    return `${sign}$${(absNum / 1e9).toFixed(maxDecimals)}B`;
   }
   if (absNum >= 1e6) {
-    return `${sign}$${(absNum / 1e6).toFixed(2)}M`;
+    return `${sign}$${(absNum / 1e6).toFixed(maxDecimals)}M`;
   }
   return `${sign}$${absNum.toLocaleString()}`;
 }

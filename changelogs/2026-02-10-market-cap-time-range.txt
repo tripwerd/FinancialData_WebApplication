@@ -1,0 +1,95 @@
+YARDSTICK - MARKET CAP TIME RANGE UPDATE
+2026-02-10
+
+SUMMARY
+Added time range filtering for Market Cap charts with options: All, 5Y (default), 1M.
+Extended historical data fetching to retrieve full company history since IPO (with
+pagination for companies older than ~20 years). Comparisons now show full range
+instead of overlap-only.
+
+NEW FMP API BEHAVIOR
+
+Historical Market Cap Endpoint
+/stable/historical-market-capitalization?symbol=X&from=Y&to=Z&limit=5000
+- Returns daily market cap data
+- API caps at 5,000 records per request (regardless of limit param)
+- For companies older than ~20 years (e.g., AAPL since 1980), requires 2 API calls
+- Data sorted newest-first by default
+
+KEY TECHNICAL DECISIONS
+
+1. Full history fetching with pagination
+   User is on FMP Starter tier which provides full historical access (not 5-year
+   limited as documentation suggests). To fetch complete history for old companies:
+   - First request: from=1900-01-01 to today, gets most recent 5000 records
+   - Check if result length == 5000 (indicates more data exists)
+   - Second request: from=1900-01-01 to oldest date from first request
+   - Combine and dedupe results
+
+   For newer companies (<5000 trading days), single API call suffices.
+
+2. Client-side time range filtering
+   Full history is fetched once and cached. Time range selection (All/5Y/1M) filters
+   cached data client-side. Switching between ranges is instant (no API calls).
+
+3. Dynamic sampling based on data volume
+   - 1M: No sampling (shows all ~22 trading days)
+   - 5Y: Every 5th point (~250 displayed)
+   - All: Adjusts sample rate to target ~500 points (sampleRate = dataLength / 500)
+
+4. Full range comparisons (not overlap-only)
+   Previous behavior: When comparing AAPL vs TSLA, only showed 2010-present (overlap).
+   New behavior: Shows full range for both. AAPL line from 1980, TSLA line appears
+   in 2010. User can see full context of each company's history.
+
+DATA FLOW
+1. User expands company card → fetch historical data (1-2 API calls)
+2. Cache full history per symbol (existing LRU cache, 20 entries max)
+3. User selects time range → filter cached data, adjust sampling
+4. Render chart with sampled data
+
+FILES CHANGED
+- lib/fmp.ts: Added getFullHistoricalMarketCap() with pagination logic
+- app/api/historical/[symbol]/route.ts: Now calls getFullHistoricalMarketCap()
+- components/ComparisonChart.tsx:
+  - Added TimeRange type and timeRange state (default: "5year")
+  - Added time range toggle UI (All | 5Y | 1M) below Market Cap metric button
+  - Time range filtering with cutoff date calculation
+  - Dynamic sampling based on data volume
+  - Removed overlap-only filter for comparisons
+
+UI CHANGES
+- Time range toggle appears below metric buttons when Market Cap is selected
+- Button order: All | 5Y | 1M (left to right, matching longest to shortest)
+- Default selection: 5Y
+- Revenue/Earnings charts unchanged (still show ~10 years quarterly data)
+
+API CALL IMPACT
+- Old: 1 call per symbol (5 years only)
+- New: 1-2 calls per symbol (full history)
+- Cached after first load, switching time ranges is free
+
+TECHNICAL ARCHITECTURE OVERVIEW
+
+Supplier: Financial Modeling Prep (FMP) API
+- User on Starter tier ($22/month)
+- 300 API calls/minute rate limit
+- Full historical data access (30+ years available)
+
+Endpoints Used:
+1. /stable/profile?symbol=X - Company basics (name, price, marketCap, beta)
+2. /stable/ratios-ttm?symbol=X - Financial ratios (P/E, margins, FCF, debt/equity)
+3. /stable/historical-market-capitalization - Daily market cap history (paginated)
+4. /stable/income-statement?period=quarterly - Quarterly revenue/earnings (~10 years)
+5. /stable/company-screener - Top companies by market cap with sector filtering
+
+Data Flow Architecture:
+1. Page load → Fetch top companies via screener + full data per company
+2. Card expand → Fetch historical market cap + quarterly financials
+3. All data cached client-side (sector cache + LRU chart cache)
+4. Subsequent views use cached data, no API calls
+
+Caching Strategy:
+- Sector companies: Cached per sector key, persists until page refresh
+- Chart data: LRU cache, 20 symbol limit, stores full history + financials
+- Time range filtering: Client-side on cached data (instant)

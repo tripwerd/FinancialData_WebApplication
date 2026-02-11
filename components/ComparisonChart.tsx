@@ -189,16 +189,9 @@ export default function ComparisonChart({
             .filter((d) => d[symbol1] || (symbol2 && d[symbol2]))
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-          // Adjust sampling based on data volume
-          let sampleRate: number;
-          if (timeRange === "1month") {
-            sampleRate = 1; // Show all points for 1 month (~22 points)
-          } else if (timeRange === "5year") {
-            sampleRate = 5; // Every 5th point (~250 points)
-          } else {
-            // "all" - adjust based on actual data size
-            sampleRate = Math.max(1, Math.floor(combined.length / 500));
-          }
+          // Adjust sampling to target ~100 points max for readability
+          const targetPoints = 100;
+          const sampleRate = Math.max(1, Math.floor(combined.length / targetPoints));
 
           const sampled = combined.filter((_, i) => i % sampleRate === 0);
 

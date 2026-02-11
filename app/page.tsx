@@ -541,7 +541,7 @@ export default function Home() {
 
             {/* Company list */}
             <div className="space-y-4">
-              {companies.map((company) => (
+              {companies.map((company, index) => (
                 company.isLimited ? (
                   <LimitedCompanyCard
                     key={company.symbol}
@@ -563,6 +563,7 @@ export default function Home() {
                     peRatio={company.peRatio}
                     fcfTTM={company.fcfTTM}
                     debtToEquity={company.debtToEquity}
+                    rank={index + 1}
                     suggestedTickers={fullCompanies
                       .filter(c => c.symbol !== company.symbol)
                       .slice(0, 5)

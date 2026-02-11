@@ -325,6 +325,38 @@ export async function getHistoricalIncomeStatement(
   }));
 }
 
+// Earnings data from FMP
+export interface EarningsData {
+  symbol: string;
+  date: string;
+  epsActual: number | null;
+  epsEstimated: number | null;
+  revenueActual: number | null;
+  revenueEstimated: number | null;
+}
+
+export async function getNextEarnings(symbol: string): Promise<EarningsData | null> {
+  const response = await fetch(
+    `${BASE_URL}/earnings?symbol=${symbol.toUpperCase()}&limit=5&apikey=${getApiKey()}`
+  );
+
+  if (!response.ok) {
+    if (response.status === 402) {
+      return null;
+    }
+    throw new Error(`FMP API error: ${response.status}`);
+  }
+
+  const data: EarningsData[] = await response.json();
+  if (!data || data.length === 0) {
+    return null;
+  }
+
+  // Find the next upcoming earnings (where epsActual is null)
+  const upcoming = data.find((d) => d.epsActual === null);
+  return upcoming || null;
+}
+
 // Screener result from FMP
 export interface ScreenerResult {
   symbol: string;

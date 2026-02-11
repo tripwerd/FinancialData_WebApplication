@@ -1,0 +1,111 @@
+YARDSTICK - EARNINGS COUNTDOWN & UI UPDATE
+2026-02-10
+
+SUMMARY
+Added live earnings countdown timer to company cards showing days/hours/minutes until
+next earnings report. Added ranking numbers to company cards. Various UI refinements
+including simplified currency formatting and chart data reduction.
+
+NEW FMP ENDPOINT USED
+/stable/earnings?symbol=X&limit=5
+- Returns upcoming and historical earnings data
+- Data includes: date, epsActual, epsEstimated, revenueActual, revenueEstimated
+- Upcoming earnings have null epsActual (not yet reported)
+- Used to find next earnings date for countdown timer
+
+NEW APP API ROUTE
+GET /api/earnings/[symbol]
+- Calls FMP earnings endpoint with limit=5
+- Finds first record where epsActual is null (upcoming earnings)
+- Returns single earnings object with next earnings date
+- 404 if no upcoming earnings found
+- Handles rate limiting (429) gracefully
+
+EARNINGS COUNTDOWN FEATURE
+
+Implementation:
+1. When company card expands, fetches earnings data via /api/earnings/[symbol]
+2. Stores earnings data in component state (cached for session)
+3. useEffect calculates countdown from current time to earnings date
+4. Updates every 60 seconds via setInterval
+5. Displays only most significant time unit for brevity:
+   - ">1 day: shows "74d"
+   - <1 day: shows "5h"
+   - <1 hour: shows "30m"
+
+UI:
+- Positioned under Revenue/Earnings columns (not under Market Cap)
+- Animated clock icon with rotating second hand (CSS animation)
+- Green primary color for countdown value
+- Only visible when card is expanded
+- Text: "Earnings & Revenue Update: Xd [clock icon]"
+
+RANKING NUMBERS
+
+Implementation:
+- Added optional `rank` prop to CompanyCard component
+- page.tsx passes index + 1 as rank when rendering company list
+- Rank displayed on left side of card, content pushed right
+
+UI:
+- Light gray (text-muted), light font weight
+- text-lg size for subtle appearance
+- Vertically aligned to top of card
+
+OTHER CHANGES
+
+1. Currency formatting: Changed from 2 decimal places to 1 (e.g., $3.5T not $3.52T)
+2. Removed "(TTM)" from Revenue and Earnings labels
+3. Chart sampling: Now targets ~100 data points max for cleaner charts
+4. Excluded BRK-A from screener (redundant with BRK-B)
+
+FILES CHANGED
+- lib/fmp.ts: Added EarningsData interface and getNextEarnings() function
+- app/api/earnings/[symbol]/route.ts: New endpoint for earnings data
+- components/CompanyCard.tsx:
+  - Added earnings fetch on expand
+  - Added countdown timer with useEffect interval
+  - Added animated clock SVG
+  - Added rank prop and left-side display
+  - Updated currency formatting to 1 decimal
+  - Removed "(TTM)" labels
+- components/ComparisonChart.tsx: Simplified sampling to target ~100 points
+- app/page.tsx: Passes rank prop to CompanyCard
+- app/globals.css: Added spin keyframes for clock animation
+- app/api/top-companies/route.ts: Added BRK-A to excluded tickers
+
+TECHNICAL ARCHITECTURE
+
+Data Suppliers:
+- Financial Modeling Prep (FMP) API - Starter tier ($22/month)
+- 300 API calls/minute rate limit
+- Full historical data access
+
+Endpoints Currently Used:
+1. /stable/profile?symbol=X - Company basics
+2. /stable/ratios-ttm?symbol=X - Financial ratios
+3. /stable/historical-market-capitalization - Daily market cap (paginated for full history)
+4. /stable/income-statement?period=quarterly - Quarterly financials
+5. /stable/company-screener - Top companies by market cap
+6. /stable/earnings?symbol=X - Earnings dates and estimates (NEW)
+
+App API Routes:
+- /api/search?q=X - Search/fetch single company
+- /api/top-companies - Screener with sector filtering
+- /api/historical/[symbol] - Full market cap history
+- /api/historical-financials/[symbol] - Quarterly revenue/earnings
+- /api/earnings/[symbol] - Next earnings date (NEW)
+
+Caching Strategy:
+- Sector companies: Cached per sector, persists until page refresh
+- Chart data: LRU cache, 20 symbol max, stores full history
+- Earnings data: Cached in component state per card instance
+- Time range filtering: Client-side on cached chart data
+
+Data Flow for Earnings:
+1. User expands card → check if earnings already fetched
+2. If not cached → fetch /api/earnings/[symbol]
+3. API calls FMP /stable/earnings, finds upcoming date
+4. Store in component state, start countdown interval
+5. Countdown updates every 60 seconds client-side
+6. Only shows when card expanded

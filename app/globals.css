@@ -44,3 +44,13 @@ input:focus {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Clock hand rotation animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

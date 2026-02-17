@@ -13,13 +13,13 @@ interface CompanyCardProps {
   symbol: string;
   companyName: string;
   marketCap: number;
-  revenueTTM: number;
-  earningsTTM: number;
+  revenueTTM?: number;
+  earningsTTM?: number;
   beta: number;
-  operatingMargin: number;
-  peRatio: number | null;
-  fcfTTM: number;
-  debtToEquity: number;
+  operatingMargin?: number;
+  peRatio?: number | null;
+  fcfTTM?: number;
+  debtToEquity?: number;
   suggestedTickers?: string[];
   rank?: number;
 }
@@ -201,12 +201,12 @@ export default function CompanyCard({
     <div className="w-full overflow-hidden rounded-lg border border-card-border bg-card-bg">
       {/* Collapsed header */}
       <div
-        className="flex cursor-pointer items-start gap-2 px-4 py-4 sm:gap-3 sm:px-6 sm:py-5"
+        className={`flex cursor-pointer items-start gap-2 py-4 pr-4 sm:gap-3 sm:py-5 sm:pr-6 ${rank ? "pl-2 sm:pl-3" : "pl-4 sm:pl-6"}`}
         onClick={handleCardClick}
       >
         {/* Rank */}
         {rank && (
-          <span className="mt-1 w-6 text-right text-base font-light tabular-nums text-text-muted">
+          <span className="mt-1 w-5 text-right text-base font-light tabular-nums text-text-muted">
             {rank}
           </span>
         )}
@@ -235,7 +235,7 @@ export default function CompanyCard({
               </svg>
             </div>
           </div>
-          <p className="mt-1 truncate text-base font-medium text-text-muted">
+          <p className="mt-1 truncate text-lg font-medium text-neutral-300">
             {companyName}
           </p>
           <div className="mt-3 grid grid-cols-3 gap-3">
@@ -246,24 +246,28 @@ export default function CompanyCard({
             <div>
               <div className="flex items-center gap-1.5">
                 <p className="text-sm uppercase tracking-wider text-text-muted">Rev</p>
-                {revenueTTM > 0 && (
+                {revenueTTM !== undefined && revenueTTM > 0 && (
                   <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getMultipleColor(marketCap / revenueTTM, "ps")}`}>
                     {formatMultiple(marketCap / revenueTTM)}
                   </span>
                 )}
               </div>
-              <p className="text-lg font-semibold tabular-nums text-neutral-300">{formatCurrency(revenueTTM)}</p>
+              <p className="text-lg font-semibold tabular-nums text-neutral-300">
+                {revenueTTM !== undefined ? formatCurrency(revenueTTM) : <span className="text-text-muted">&mdash;</span>}
+              </p>
             </div>
             <div>
               <div className="flex items-center gap-1.5">
                 <p className="text-sm uppercase tracking-wider text-text-muted">Earn</p>
-                {earningsTTM > 0 && (
+                {earningsTTM !== undefined && earningsTTM > 0 && (
                   <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getMultipleColor(marketCap / earningsTTM, "pe")}`}>
                     {formatMultiple(marketCap / earningsTTM)}
                   </span>
                 )}
               </div>
-              <p className="text-lg font-semibold tabular-nums text-neutral-300">{formatCurrency(earningsTTM)}</p>
+              <p className="text-lg font-semibold tabular-nums text-neutral-300">
+                {earningsTTM !== undefined ? formatCurrency(earningsTTM) : <span className="text-text-muted">&mdash;</span>}
+              </p>
             </div>
           </div>
         </div>
@@ -387,15 +391,15 @@ export default function CompanyCard({
               <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-5">
                 <div>
                   <p className="text-sm text-text-muted">FCF (TTM)</p>
-                  <p className="text-lg font-medium">{formatCurrency(fcfTTM)}</p>
+                  <p className="text-lg font-medium">{fcfTTM !== undefined ? formatCurrency(fcfTTM) : <span className="text-text-muted">&mdash;</span>}</p>
                 </div>
                 <div>
                   <p className="text-sm text-text-muted">Operating Margin</p>
-                  <p className="text-lg font-medium">{formatPercent(operatingMargin)}</p>
+                  <p className="text-lg font-medium">{operatingMargin !== undefined ? formatPercent(operatingMargin) : <span className="text-text-muted">&mdash;</span>}</p>
                 </div>
                 <div>
                   <p className="text-sm text-text-muted">P/E Ratio</p>
-                  <p className="text-lg font-medium">{formatNumber(peRatio)}</p>
+                  <p className="text-lg font-medium">{peRatio !== undefined ? formatNumber(peRatio) : <span className="text-text-muted">&mdash;</span>}</p>
                 </div>
                 <div>
                   <p className="text-sm text-text-muted">Beta</p>
@@ -403,7 +407,7 @@ export default function CompanyCard({
                 </div>
                 <div>
                   <p className="text-sm text-text-muted">Debt/Equity</p>
-                  <p className="text-lg font-medium">{formatNumber(debtToEquity)}</p>
+                  <p className="text-lg font-medium">{debtToEquity !== undefined ? formatNumber(debtToEquity) : <span className="text-text-muted">&mdash;</span>}</p>
                 </div>
               </div>
             )}

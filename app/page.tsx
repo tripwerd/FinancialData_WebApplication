@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import CompanyCard from "@/components/CompanyCard";
-import LimitedCompanyCard from "@/components/LimitedCompanyCard";
 import type { CompanyData, CompanyDisplayData } from "@/lib/fmp";
 
 type SectorKey =
@@ -489,26 +488,20 @@ export default function Home() {
             {searchError && (
               <p className="text-center text-text-muted">{searchError}</p>
             )}
-            {searchedCompany && searchedCompany.isLimited && (
-              <LimitedCompanyCard
-                symbol={searchedCompany.symbol}
-                companyName={searchedCompany.companyName}
-                marketCap={searchedCompany.marketCap}
-                beta={searchedCompany.beta}
-              />
-            )}
-            {searchedCompany && !searchedCompany.isLimited && (
+            {searchedCompany && (
               <CompanyCard
                 symbol={searchedCompany.symbol}
                 companyName={searchedCompany.companyName}
                 marketCap={searchedCompany.marketCap}
-                revenueTTM={searchedCompany.revenueTTM}
-                earningsTTM={searchedCompany.earningsTTM}
                 beta={searchedCompany.beta}
-                operatingMargin={searchedCompany.operatingMargin}
-                peRatio={searchedCompany.peRatio}
-                fcfTTM={searchedCompany.fcfTTM}
-                debtToEquity={searchedCompany.debtToEquity}
+                {...(!searchedCompany.isLimited && {
+                  revenueTTM: searchedCompany.revenueTTM,
+                  earningsTTM: searchedCompany.earningsTTM,
+                  operatingMargin: searchedCompany.operatingMargin,
+                  peRatio: searchedCompany.peRatio,
+                  fcfTTM: searchedCompany.fcfTTM,
+                  debtToEquity: searchedCompany.debtToEquity,
+                })}
               />
             )}
           </div>
@@ -539,34 +532,26 @@ export default function Home() {
             {/* Company list */}
             <div className="space-y-4">
               {companies.map((company, index) => (
-                company.isLimited ? (
-                  <LimitedCompanyCard
-                    key={company.symbol}
-                    symbol={company.symbol}
-                    companyName={company.companyName}
-                    marketCap={company.marketCap}
-                    beta={company.beta}
-                  />
-                ) : (
-                  <CompanyCard
-                    key={company.symbol}
-                    symbol={company.symbol}
-                    companyName={company.companyName}
-                    marketCap={company.marketCap}
-                    revenueTTM={company.revenueTTM}
-                    earningsTTM={company.earningsTTM}
-                    beta={company.beta}
-                    operatingMargin={company.operatingMargin}
-                    peRatio={company.peRatio}
-                    fcfTTM={company.fcfTTM}
-                    debtToEquity={company.debtToEquity}
-                    rank={index + 1}
-                    suggestedTickers={fullCompanies
+                <CompanyCard
+                  key={company.symbol}
+                  symbol={company.symbol}
+                  companyName={company.companyName}
+                  marketCap={company.marketCap}
+                  beta={company.beta}
+                  rank={index + 1}
+                  {...(!company.isLimited && {
+                    revenueTTM: company.revenueTTM,
+                    earningsTTM: company.earningsTTM,
+                    operatingMargin: company.operatingMargin,
+                    peRatio: company.peRatio,
+                    fcfTTM: company.fcfTTM,
+                    debtToEquity: company.debtToEquity,
+                    suggestedTickers: fullCompanies
                       .filter(c => c.symbol !== company.symbol)
                       .slice(0, 5)
-                      .map(c => c.symbol)}
-                  />
-                )
+                      .map(c => c.symbol),
+                  })}
+                />
               ))}
             </div>
           </>

@@ -201,12 +201,12 @@ export default function CompanyCard({
     <div className="w-full overflow-hidden rounded-lg border border-card-border bg-card-bg">
       {/* Collapsed header */}
       <div
-        className="flex cursor-pointer items-start gap-2 px-3 py-3 sm:gap-3 sm:px-5 sm:py-4"
+        className="flex cursor-pointer items-start gap-2 px-4 py-4 sm:gap-3 sm:px-6 sm:py-5"
         onClick={handleCardClick}
       >
         {/* Rank */}
         {rank && (
-          <span className="mt-1 w-5 text-right text-sm font-light tabular-nums text-text-muted">
+          <span className="mt-1 w-6 text-right text-base font-light tabular-nums text-text-muted">
             {rank}
           </span>
         )}
@@ -214,7 +214,7 @@ export default function CompanyCard({
         {/* Headline */}
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-4">
-            <span className="text-lg font-bold tracking-wide text-green-primary">
+            <span className="text-xl font-bold tracking-wide text-green-primary">
               {symbol}
             </span>
             <div className="flex shrink-0 items-center gap-2">
@@ -235,35 +235,35 @@ export default function CompanyCard({
               </svg>
             </div>
           </div>
-          <p className="mt-0.5 truncate text-sm font-medium text-text-muted">
+          <p className="mt-1 truncate text-base font-medium text-text-muted">
             {companyName}
           </p>
-          <div className="mt-2 grid grid-cols-3 gap-2">
+          <div className="mt-3 grid grid-cols-3 gap-3">
             <div>
-              <p className="text-xs uppercase tracking-wider text-text-muted">Mkt Cap</p>
-              <p className="text-base font-semibold tabular-nums text-neutral-300">{formatCurrency(marketCap)}</p>
+              <p className="text-sm uppercase tracking-wider text-text-muted">Mkt Cap</p>
+              <p className="text-lg font-semibold tabular-nums text-neutral-300">{formatCurrency(marketCap)}</p>
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <p className="text-xs uppercase tracking-wider text-text-muted">Rev</p>
+                <p className="text-sm uppercase tracking-wider text-text-muted">Rev</p>
                 {revenueTTM > 0 && (
-                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${getMultipleColor(marketCap / revenueTTM, "ps")}`}>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getMultipleColor(marketCap / revenueTTM, "ps")}`}>
                     {formatMultiple(marketCap / revenueTTM)}
                   </span>
                 )}
               </div>
-              <p className="text-base font-semibold tabular-nums text-neutral-300">{formatCurrency(revenueTTM)}</p>
+              <p className="text-lg font-semibold tabular-nums text-neutral-300">{formatCurrency(revenueTTM)}</p>
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <p className="text-xs uppercase tracking-wider text-text-muted">Earn</p>
+                <p className="text-sm uppercase tracking-wider text-text-muted">Earn</p>
                 {earningsTTM > 0 && (
-                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${getMultipleColor(marketCap / earningsTTM, "pe")}`}>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getMultipleColor(marketCap / earningsTTM, "pe")}`}>
                     {formatMultiple(marketCap / earningsTTM)}
                   </span>
                 )}
               </div>
-              <p className="text-base font-semibold tabular-nums text-neutral-300">{formatCurrency(earningsTTM)}</p>
+              <p className="text-lg font-semibold tabular-nums text-neutral-300">{formatCurrency(earningsTTM)}</p>
             </div>
           </div>
         </div>
@@ -271,7 +271,7 @@ export default function CompanyCard({
 
       {/* Expanded content */}
       {isOpen && (
-        <div className="border-t border-card-border px-3 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
+        <div className="border-t border-card-border px-4 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-5">
           {/* Earnings countdown */}
           {earnings && countdown && (
             <div className="mb-5 flex items-center gap-1.5">

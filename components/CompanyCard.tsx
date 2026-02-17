@@ -278,53 +278,59 @@ export default function CompanyCard({
       {/* Expanded content */}
       {isOpen && (
         <div className="border-t border-card-border px-4 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-5">
-          {/* Earnings countdown + forward estimates */}
+          {/* Earnings countdown + forward estimates — grid aligned with trailing metrics above */}
           {earnings && (
-            <div className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-1">
-              {countdown && (
-                <div className="flex items-center gap-1">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    className="text-green-primary"
-                  >
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-                    <line x1="12" y1="12" x2="12" y2="7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                    <line
-                      x1="12"
-                      y1="12"
-                      x2="16"
-                      y2="12"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      style={{
-                        transformOrigin: "12px 12px",
-                        animation: "spin 4s linear infinite",
-                      }}
-                    />
-                  </svg>
-                  <span className="text-sm font-medium text-green-primary">{countdown}</span>
-                </div>
-              )}
-              {earnings.revenueEstimated && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs uppercase tracking-wider text-text-muted">Fwd Rev</span>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getMultipleColor(marketCap / (earnings.revenueEstimated * 4), "ps")}`}>
-                    {formatMultiple(marketCap / (earnings.revenueEstimated * 4))}
-                  </span>
-                </div>
-              )}
-              {earnings.epsEstimated && price && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs uppercase tracking-wider text-text-muted">Fwd Earn</span>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getMultipleColor(price / (earnings.epsEstimated * 4), "pe")}`}>
-                    {formatMultiple(price / (earnings.epsEstimated * 4))}
-                  </span>
-                </div>
-              )}
+            <div className={`mb-5 grid grid-cols-3 gap-3 ${rank ? "ml-7 sm:ml-8" : ""}`}>
+              <div className="flex items-center gap-1">
+                {countdown && (
+                  <>
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      className="text-green-primary"
+                    >
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+                      <line x1="12" y1="12" x2="12" y2="7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      <line
+                        x1="12"
+                        y1="12"
+                        x2="16"
+                        y2="12"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        style={{
+                          transformOrigin: "12px 12px",
+                          animation: "spin 4s linear infinite",
+                        }}
+                      />
+                    </svg>
+                    <span className="text-sm font-medium text-green-primary">{countdown}</span>
+                  </>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                {earnings.revenueEstimated && (
+                  <>
+                    <span className="text-xs uppercase tracking-wider text-text-muted">Fwd</span>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getMultipleColor(marketCap / (earnings.revenueEstimated * 4), "ps")}`}>
+                      {formatMultiple(marketCap / (earnings.revenueEstimated * 4))}
+                    </span>
+                  </>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                {earnings.epsEstimated && price && (
+                  <>
+                    <span className="text-xs uppercase tracking-wider text-text-muted">Fwd</span>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getMultipleColor(price / (earnings.epsEstimated * 4), "pe")}`}>
+                      {formatMultiple(price / (earnings.epsEstimated * 4))}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
           )}
 

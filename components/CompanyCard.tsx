@@ -282,9 +282,7 @@ export default function CompanyCard({
           {earnings && (
             <div className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-1">
               {countdown && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs uppercase tracking-wider text-text-muted">Update</span>
-                  <span className="text-sm font-medium text-green-primary">{countdown}</span>
+                <div className="flex items-center gap-1">
                   <svg
                     width="14"
                     height="14"
@@ -308,6 +306,7 @@ export default function CompanyCard({
                       }}
                     />
                   </svg>
+                  <span className="text-sm font-medium text-green-primary">{countdown}</span>
                 </div>
               )}
               {earnings.revenueEstimated && (

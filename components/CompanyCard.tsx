@@ -241,7 +241,7 @@ export default function CompanyCard({
           <div className="mt-2 grid grid-cols-3 gap-2">
             <div>
               <p className="text-xs uppercase tracking-wider text-text-muted">Mkt Cap</p>
-              <p className="text-base font-semibold tabular-nums text-neutral-400">{formatCurrency(marketCap)}</p>
+              <p className="text-base font-semibold tabular-nums text-neutral-300">{formatCurrency(marketCap)}</p>
             </div>
             <div>
               <div className="flex items-center gap-1.5">
@@ -252,7 +252,7 @@ export default function CompanyCard({
                   </span>
                 )}
               </div>
-              <p className="text-base font-semibold tabular-nums text-neutral-400">{formatCurrency(revenueTTM)}</p>
+              <p className="text-base font-semibold tabular-nums text-neutral-300">{formatCurrency(revenueTTM)}</p>
             </div>
             <div>
               <div className="flex items-center gap-1.5">
@@ -263,7 +263,7 @@ export default function CompanyCard({
                   </span>
                 )}
               </div>
-              <p className="text-base font-semibold tabular-nums text-neutral-400">{formatCurrency(earningsTTM)}</p>
+              <p className="text-base font-semibold tabular-nums text-neutral-300">{formatCurrency(earningsTTM)}</p>
             </div>
           </div>
         </div>

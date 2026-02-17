@@ -241,29 +241,29 @@ export default function CompanyCard({
           <div className="mt-2 grid grid-cols-3 gap-2">
             <div>
               <p className="text-xs uppercase tracking-wider text-text-muted">Mkt Cap</p>
-              <p className="text-base font-semibold tabular-nums text-neutral-200">{formatCurrency(marketCap)}</p>
+              <p className="text-base font-semibold tabular-nums text-neutral-400">{formatCurrency(marketCap)}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wider text-text-muted">Rev</p>
-              <div className="flex items-center gap-1">
-                <span className="text-base font-semibold tabular-nums text-neutral-200">{formatCurrency(revenueTTM)}</span>
+              <div className="flex items-center gap-1.5">
+                <p className="text-xs uppercase tracking-wider text-text-muted">Rev</p>
                 {revenueTTM > 0 && (
                   <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${getMultipleColor(marketCap / revenueTTM, "ps")}`}>
                     {formatMultiple(marketCap / revenueTTM)}
                   </span>
                 )}
               </div>
+              <p className="text-base font-semibold tabular-nums text-neutral-400">{formatCurrency(revenueTTM)}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wider text-text-muted">Earn</p>
-              <div className="flex items-center gap-1">
-                <span className="text-base font-semibold tabular-nums text-neutral-200">{formatCurrency(earningsTTM)}</span>
+              <div className="flex items-center gap-1.5">
+                <p className="text-xs uppercase tracking-wider text-text-muted">Earn</p>
                 {earningsTTM > 0 && (
                   <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${getMultipleColor(marketCap / earningsTTM, "pe")}`}>
                     {formatMultiple(marketCap / earningsTTM)}
                   </span>
                 )}
               </div>
+              <p className="text-base font-semibold tabular-nums text-neutral-400">{formatCurrency(earningsTTM)}</p>
             </div>
           </div>
         </div>

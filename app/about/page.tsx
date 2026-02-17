@@ -65,8 +65,14 @@ export default function About() {
           </h1>
         </header>
 
-        <div className="text-center text-text-muted">
-          <p>Coming soon.</p>
+        <div className="text-text-muted space-y-4">
+          <p>Optimized for mobile, Yardstick is a financial data app designed to help users build an intuitive sense of public company value and performance. It surfaces a focused set of financial metrics built around three core questions:</p>
+          <ol className="list-decimal list-inside space-y-1 pl-2">
+            <li>How much money does a company generate?</li>
+            <li>How much of that money does it keep?</li>
+            <li>How much does the market believe a company is worth?</li>
+          </ol>
+          <p>Each of these questions are explored in the context of time and comparison to other companies, and the data surfaced in the UI—primarily centered around revenue, earnings, and market cap—is intentionally constrained to the metrics that matter most, balancing clarity for the user with efficient upstream API usage and minimizing unnecessary payload size.</p>
         </div>
       </div>
     </div>

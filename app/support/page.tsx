@@ -66,7 +66,7 @@ export default function Support() {
         </header>
 
         <div className="text-center text-text-muted">
-          <p>Maintaining Yardstick is not free. To support, <a href="https://venmo.com/u/Trip-Werd" target="_blank" rel="noopener noreferrer" className="text-green-primary underline hover:text-green-light">Venmo me</a>.</p>
+          <p>Maintaining Yardstick is not free. To support Yardstick, consider <a href="https://venmo.com/u/Trip-Werd" target="_blank" rel="noopener noreferrer" className="text-green-primary underline hover:text-green-light">donating via Venmo</a>.</p>
         </div>
       </div>
     </div>

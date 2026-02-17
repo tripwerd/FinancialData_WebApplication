@@ -448,8 +448,8 @@ export default function Home() {
         </svg>
       </button>
 
-      <div className="mx-auto max-w-2xl px-4 py-16">
-        <header className="mb-12 text-center">
+      <div className="mx-auto max-w-2xl px-4 pt-4 pb-16">
+        <header className="mb-6 text-center">
           <h1 className="text-4xl font-bold text-green-primary">
             Yardstick
           </h1>

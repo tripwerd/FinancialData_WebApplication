@@ -261,10 +261,14 @@ export default function CompanyCard({
             <div>
               <div className="flex items-center gap-1.5">
                 <p className="text-sm uppercase tracking-wider text-text-muted">Earn</p>
-                {earningsTTM !== undefined && earningsTTM > 0 && (
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getMultipleColor(marketCap / earningsTTM, "pe")}`}>
-                    {formatMultiple(marketCap / earningsTTM)}
-                  </span>
+                {earningsTTM !== undefined && earningsTTM !== 0 && (
+                  earningsTTM < 0 ? (
+                    <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-semibold text-red-400">neg</span>
+                  ) : (
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getMultipleColor(marketCap / earningsTTM, "pe")}`}>
+                      {formatMultiple(marketCap / earningsTTM)}
+                    </span>
+                  )
                 )}
               </div>
               <p className="text-lg font-semibold tabular-nums text-neutral-300">
@@ -325,9 +329,13 @@ export default function CompanyCard({
                 {earnings.epsEstimated && price && (
                   <>
                     <span className="text-xs uppercase tracking-wider text-text-muted">Fwd Earn</span>
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getMultipleColor(price / (earnings.epsEstimated * 4), "pe")}`}>
-                      {formatMultiple(price / (earnings.epsEstimated * 4))}
-                    </span>
+                    {earnings.epsEstimated < 0 ? (
+                      <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-semibold text-red-400">neg</span>
+                    ) : (
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getMultipleColor(price / (earnings.epsEstimated * 4), "pe")}`}>
+                        {formatMultiple(price / (earnings.epsEstimated * 4))}
+                      </span>
+                    )}
                   </>
                 )}
               </div>

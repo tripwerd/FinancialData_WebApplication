@@ -201,7 +201,7 @@ export default function CompanyCard({
     <div className="w-full overflow-hidden rounded-lg border border-card-border bg-card-bg">
       {/* Collapsed header */}
       <div
-        className="flex cursor-pointer items-start gap-3 px-5 py-4"
+        className="flex cursor-pointer items-start gap-2 px-3 py-3 sm:gap-3 sm:px-5 sm:py-4"
         onClick={handleCardClick}
       >
         {/* Rank */}
@@ -238,7 +238,7 @@ export default function CompanyCard({
           <p className="mt-0.5 truncate text-sm font-medium text-text-muted">
             {companyName}
           </p>
-          <div className="mt-2 flex items-center gap-4">
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
             <div className="flex items-center gap-1.5">
               <span className="text-xs uppercase tracking-wider text-text-muted">Mkt Cap</span>
               <span className="text-sm font-bold tabular-nums text-foreground">{formatCurrency(marketCap)}</span>
@@ -267,7 +267,7 @@ export default function CompanyCard({
 
       {/* Expanded content */}
       {isOpen && (
-        <div className="border-t border-card-border px-5 pb-5 pt-4">
+        <div className="border-t border-card-border px-3 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
           {/* Earnings countdown */}
           {earnings && countdown && (
             <div className="mb-5 flex items-center gap-1.5">

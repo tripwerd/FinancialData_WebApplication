@@ -247,7 +247,7 @@ export default function CompanyCard({
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <p className="w-10 text-sm uppercase tracking-wider text-text-muted">Rev</p>
+                <p className="text-sm uppercase tracking-wider text-text-muted">Rev</p>
                 {revenueTTM !== undefined && revenueTTM > 0 && (
                   <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getMultipleColor(marketCap / revenueTTM, "ps")}`}>
                     {formatMultiple(marketCap / revenueTTM)}
@@ -260,7 +260,7 @@ export default function CompanyCard({
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <p className="w-10 text-sm uppercase tracking-wider text-text-muted">Earn</p>
+                <p className="text-sm uppercase tracking-wider text-text-muted">Earn</p>
                 {earningsTTM !== undefined && earningsTTM !== 0 && (
                   earningsTTM < 0 ? (
                     <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-semibold text-red-400">neg</span>
@@ -282,7 +282,7 @@ export default function CompanyCard({
       {/* Expanded content */}
       {isOpen && (
         <div className="border-t border-card-border px-4 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-5">
-          {/* Earnings countdown + forward estimates — grid aligned with trailing metrics above */}
+          {/* Earnings countdown + forward estimates */}
           {earnings && (
             <div className={`mb-5 grid grid-cols-3 gap-3 ${rank ? "ml-7 sm:ml-8" : ""}`}>
               <div className="flex items-center gap-1">
@@ -318,7 +318,7 @@ export default function CompanyCard({
               <div className="flex items-center gap-1.5">
                 {earnings.revenueEstimated && (
                   <>
-                    <span className="w-10 text-xs uppercase tracking-wider text-text-muted">Fwd Rev</span>
+                    <span className="whitespace-nowrap text-xs uppercase tracking-wider text-text-muted">Fwd Rev</span>
                     <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getMultipleColor(marketCap / (earnings.revenueEstimated * 4), "ps")}`}>
                       {formatMultiple(marketCap / (earnings.revenueEstimated * 4))}
                     </span>
@@ -328,7 +328,7 @@ export default function CompanyCard({
               <div className="flex items-center gap-1.5">
                 {earnings.epsEstimated && price && (
                   <>
-                    <span className="w-10 text-xs uppercase tracking-wider text-text-muted">Fwd Earn</span>
+                    <span className="whitespace-nowrap text-xs uppercase tracking-wider text-text-muted">Fwd Earn</span>
                     {earnings.epsEstimated < 0 ? (
                       <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-semibold text-red-400">neg</span>
                     ) : (

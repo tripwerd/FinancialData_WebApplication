@@ -13,6 +13,7 @@ interface CompanyCardProps {
   symbol: string;
   companyName: string;
   marketCap: number;
+  price?: number;
   revenueTTM?: number;
   earningsTTM?: number;
   beta: number;
@@ -68,6 +69,7 @@ export default function CompanyCard({
   symbol,
   companyName,
   marketCap,
+  price,
   revenueTTM,
   earningsTTM,
   beta,
@@ -311,13 +313,17 @@ export default function CompanyCard({
               {earnings.revenueEstimated && (
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs uppercase tracking-wider text-text-muted">Fwd Rev</span>
-                  <span className="text-sm font-medium text-neutral-300">{formatCurrency(earnings.revenueEstimated * 4)}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getMultipleColor(marketCap / (earnings.revenueEstimated * 4), "ps")}`}>
+                    {formatMultiple(marketCap / (earnings.revenueEstimated * 4))}
+                  </span>
                 </div>
               )}
-              {earnings.epsEstimated && (
+              {earnings.epsEstimated && price && (
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs uppercase tracking-wider text-text-muted">Fwd EPS</span>
-                  <span className="text-sm font-medium text-neutral-300">${(earnings.epsEstimated * 4).toFixed(2)}</span>
+                  <span className="text-xs uppercase tracking-wider text-text-muted">Fwd Earn</span>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getMultipleColor(price / (earnings.epsEstimated * 4), "pe")}`}>
+                    {formatMultiple(price / (earnings.epsEstimated * 4))}
+                  </span>
                 </div>
               )}
             </div>

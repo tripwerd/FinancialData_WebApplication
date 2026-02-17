@@ -68,6 +68,7 @@ export interface CompanyDisplayData {
   symbol: string;
   companyName: string;
   marketCap: number;
+  price: number;
   revenueTTM: number;
   earningsTTM: number;
   beta: number;
@@ -123,6 +124,7 @@ export async function getFullCompanyData(
     symbol: profile.symbol,
     companyName: profile.companyName,
     marketCap: profile.marketCap,
+    price: profile.price,
     revenueTTM,
     earningsTTM,
     beta: profile.beta,
@@ -354,7 +356,22 @@ export async function getNextEarnings(symbol: string): Promise<EarningsData | nu
 
   // Find the next upcoming earnings (where epsActual is null)
   const upcoming = data.find((d) => d.epsActual === null);
-  return upcoming || null;
+  if (!upcoming) return null;
+
+  // If estimates aren't published yet for the upcoming quarter,
+  // fill them in from the most recent quarter that has estimates
+  if (upcoming.epsEstimated === null || upcoming.revenueEstimated === null) {
+    const withEstimates = data.find((d) => d.epsEstimated !== null && d.revenueEstimated !== null);
+    if (withEstimates) {
+      return {
+        ...upcoming,
+        epsEstimated: upcoming.epsEstimated ?? withEstimates.epsEstimated,
+        revenueEstimated: upcoming.revenueEstimated ?? withEstimates.revenueEstimated,
+      };
+    }
+  }
+
+  return upcoming;
 }
 
 // Screener result from FMP

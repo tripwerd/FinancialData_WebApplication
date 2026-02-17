@@ -495,6 +495,7 @@ export default function Home() {
                 marketCap={searchedCompany.marketCap}
                 beta={searchedCompany.beta}
                 {...(!searchedCompany.isLimited && {
+                  price: searchedCompany.price,
                   revenueTTM: searchedCompany.revenueTTM,
                   earningsTTM: searchedCompany.earningsTTM,
                   operatingMargin: searchedCompany.operatingMargin,
@@ -540,6 +541,7 @@ export default function Home() {
                   beta={company.beta}
                   rank={index + 1}
                   {...(!company.isLimited && {
+                    price: company.price,
                     revenueTTM: company.revenueTTM,
                     earningsTTM: company.earningsTTM,
                     operatingMargin: company.operatingMargin,

@@ -314,7 +314,7 @@ export default function CompanyCard({
               <div className="flex items-center gap-1.5">
                 {earnings.revenueEstimated && (
                   <>
-                    <span className="text-xs uppercase tracking-wider text-text-muted">Fwd</span>
+                    <span className="text-xs uppercase tracking-wider text-text-muted">Fwd Rev</span>
                     <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getMultipleColor(marketCap / (earnings.revenueEstimated * 4), "ps")}`}>
                       {formatMultiple(marketCap / (earnings.revenueEstimated * 4))}
                     </span>
@@ -324,7 +324,7 @@ export default function CompanyCard({
               <div className="flex items-center gap-1.5">
                 {earnings.epsEstimated && price && (
                   <>
-                    <span className="text-xs uppercase tracking-wider text-text-muted">Fwd</span>
+                    <span className="text-xs uppercase tracking-wider text-text-muted">Fwd Earn</span>
                     <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getMultipleColor(price / (earnings.epsEstimated * 4), "pe")}`}>
                       {formatMultiple(price / (earnings.epsEstimated * 4))}
                     </span>

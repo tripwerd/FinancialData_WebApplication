@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Compare",
+  title: "Yardstick",
   description: "Compare companies by what actually matters",
 };
 

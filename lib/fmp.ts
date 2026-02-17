@@ -354,9 +354,13 @@ export async function getNextEarnings(symbol: string): Promise<EarningsData | nu
     return null;
   }
 
-  // Find the next upcoming earnings (where epsActual is null)
-  const upcoming = data.find((d) => d.epsActual === null);
-  if (!upcoming) return null;
+  // Find the nearest upcoming earnings (where epsActual is null, closest future date)
+  const now = new Date();
+  const upcomingEntries = data
+    .filter((d) => d.epsActual === null && new Date(d.date) >= now)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  if (upcomingEntries.length === 0) return null;
+  const upcoming = upcomingEntries[0];
 
   // If estimates aren't published yet for the upcoming quarter,
   // fill them in from the most recent quarter that has estimates

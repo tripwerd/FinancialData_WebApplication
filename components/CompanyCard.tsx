@@ -50,8 +50,7 @@ function formatNumber(num: number | null, decimals: number = 2): string {
 
 function formatMultiple(multiple: number): string {
   if (multiple > 999) return ">999x";
-  if (multiple >= 100) return `${Math.round(multiple)}x`;
-  return `${multiple.toFixed(1)}x`;
+  return `${Math.round(multiple)}x`;
 }
 
 function getMultipleColor(multiple: number, type: "ps" | "pe"): string {
@@ -239,15 +238,15 @@ export default function CompanyCard({
           <p className="mt-0.5 truncate text-sm font-medium text-text-muted">
             {companyName}
           </p>
-          <div className="mt-2 flex items-center gap-3">
+          <div className="mt-2 grid grid-cols-3 gap-2">
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-text-muted">Mkt Cap</p>
-              <p className="text-sm font-bold tabular-nums text-foreground">{formatCurrency(marketCap)}</p>
+              <p className="text-xs uppercase tracking-wider text-text-muted">Mkt Cap</p>
+              <p className="text-base font-semibold tabular-nums text-neutral-200">{formatCurrency(marketCap)}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-text-muted">Rev</p>
+              <p className="text-xs uppercase tracking-wider text-text-muted">Rev</p>
               <div className="flex items-center gap-1">
-                <span className="text-sm font-semibold tabular-nums text-neutral-300">{formatCurrency(revenueTTM)}</span>
+                <span className="text-base font-semibold tabular-nums text-neutral-200">{formatCurrency(revenueTTM)}</span>
                 {revenueTTM > 0 && (
                   <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${getMultipleColor(marketCap / revenueTTM, "ps")}`}>
                     {formatMultiple(marketCap / revenueTTM)}
@@ -256,9 +255,9 @@ export default function CompanyCard({
               </div>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-text-muted">Earn</p>
+              <p className="text-xs uppercase tracking-wider text-text-muted">Earn</p>
               <div className="flex items-center gap-1">
-                <span className="text-sm font-semibold tabular-nums text-neutral-300">{formatCurrency(earningsTTM)}</span>
+                <span className="text-base font-semibold tabular-nums text-neutral-200">{formatCurrency(earningsTTM)}</span>
                 {earningsTTM > 0 && (
                   <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${getMultipleColor(marketCap / earningsTTM, "pe")}`}>
                     {formatMultiple(marketCap / earningsTTM)}

@@ -453,9 +453,6 @@ export default function Home() {
           <h1 className="text-4xl font-bold text-green-primary">
             Yardstick
           </h1>
-          <p className="mt-2 text-text-muted">
-            Measure companies with ease
-          </p>
         </header>
 
         <form onSubmit={handleSearch} className="mb-8">

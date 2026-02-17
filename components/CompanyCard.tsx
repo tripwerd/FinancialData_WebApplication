@@ -238,11 +238,11 @@ export default function CompanyCard({
           <p className="mt-0.5 truncate text-sm font-medium text-text-muted">
             {companyName}
           </p>
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs uppercase tracking-wider text-text-muted">Mkt Cap</span>
-              <span className="text-sm font-bold tabular-nums text-foreground">{formatCurrency(marketCap)}</span>
-            </div>
+          <div className="mt-2 flex items-center gap-1.5">
+            <span className="text-xs uppercase tracking-wider text-text-muted">Mkt Cap</span>
+            <span className="text-sm font-bold tabular-nums text-foreground">{formatCurrency(marketCap)}</span>
+          </div>
+          <div className="mt-1 flex items-center gap-4">
             <div className="flex items-center gap-1.5">
               <span className="text-xs uppercase tracking-wider text-text-muted">Rev</span>
               <span className="text-sm font-semibold tabular-nums text-neutral-300">{formatCurrency(revenueTTM)}</span>
@@ -271,7 +271,7 @@ export default function CompanyCard({
           {/* Earnings countdown */}
           {earnings && countdown && (
             <div className="mb-5 flex items-center gap-1.5">
-              <span className="text-sm text-text-muted">Earnings & Revenue Update:</span>
+              <span className="text-sm text-text-muted"><span className="text-xs font-semibold uppercase tracking-wider">REV</span> & <span className="text-xs font-semibold uppercase tracking-wider">EARN</span> Update:</span>
               <span className="text-sm font-medium text-green-primary">{countdown}</span>
               <svg
                 width="14"

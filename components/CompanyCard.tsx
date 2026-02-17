@@ -284,7 +284,7 @@ export default function CompanyCard({
         <div className="border-t border-card-border px-4 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-5">
           {/* Earnings countdown + forward estimates */}
           {earnings && (
-            <div className={`mb-5 grid grid-cols-3 gap-3 ${rank ? "ml-7 sm:ml-8" : ""}`}>
+            <div className={`mb-5 grid grid-cols-3 gap-3 ${rank ? "ml-5" : ""}`}>
               <div className="flex items-center gap-1">
                 {countdown && (
                   <>

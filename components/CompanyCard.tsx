@@ -48,6 +48,22 @@ function formatNumber(num: number | null, decimals: number = 2): string {
   return num.toFixed(decimals);
 }
 
+function formatMultiple(multiple: number): string {
+  if (multiple > 999) return ">999x";
+  return `${multiple.toFixed(1)}x`;
+}
+
+function getMultipleColor(multiple: number, type: "ps" | "pe"): string {
+  if (type === "ps") {
+    if (multiple < 5) return "bg-emerald-500/15 text-emerald-400";
+    if (multiple < 15) return "bg-amber-500/15 text-amber-400";
+    return "bg-red-500/15 text-red-400";
+  }
+  if (multiple < 20) return "bg-emerald-500/15 text-emerald-400";
+  if (multiple < 40) return "bg-amber-500/15 text-amber-400";
+  return "bg-red-500/15 text-red-400";
+}
+
 export default function CompanyCard({
   symbol,
   companyName,
@@ -179,61 +195,81 @@ export default function CompanyCard({
     }
   }
 
+  const isOpen = expanded || comparing;
+
   return (
-    <div className="w-full rounded-lg border border-card-border bg-card-bg p-5">
-      <div className="flex gap-4">
-        {/* Rank number on the left */}
+    <div className="w-full overflow-hidden rounded-lg border border-card-border bg-card-bg">
+      {/* Collapsed header */}
+      <div
+        className="flex cursor-pointer items-start gap-3 px-5 py-4"
+        onClick={handleCardClick}
+      >
+        {/* Rank */}
         {rank && (
-          <div className="flex items-start justify-center">
-            <span className="text-lg font-light text-text-muted">
-              {rank}
-            </span>
-          </div>
+          <span className="mt-1 w-5 text-right text-sm font-light tabular-nums text-text-muted">
+            {rank}
+          </span>
         )}
 
-        {/* Main content area */}
-        <div className="flex-1">
-          {/* Clickable area - always clickable */}
-          <div
-            className="cursor-pointer"
-            onClick={handleCardClick}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-lg font-semibold text-green-primary">
-                  {symbol}
-                </span>
-                <h2 className="text-xl font-medium text-foreground">
-                  {companyName}
-                </h2>
-              </div>
-              <span className="text-2xl text-text-muted">
-                {expanded || comparing ? "−" : "+"}
+        {/* Headline */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-4">
+            <span className="text-lg font-bold tracking-wide text-green-primary">
+              {symbol}
+            </span>
+            <div className="flex shrink-0 items-center gap-2">
+              <span className="text-lg font-semibold tabular-nums text-foreground">
+                {formatCurrency(marketCap)}
               </span>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={`text-text-muted transition-transform duration-200 ${
+                  isOpen ? "rotate-180" : ""
+                }`}
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
             </div>
-
-        {/* Core metrics - always visible */}
-        <div className="mt-4 grid grid-cols-3 gap-4">
-          <div>
-            <p className="text-sm text-text-muted">Market Cap</p>
-            <p className="text-lg font-medium">{formatCurrency(marketCap)}</p>
           </div>
-          <div>
-            <p className="text-sm text-text-muted">Revenue</p>
-            <p className="text-lg font-medium">{formatCurrency(revenueTTM)}</p>
-          </div>
-          <div>
-            <p className="text-sm text-text-muted">Earnings</p>
-            <p className="text-lg font-medium">{formatCurrency(earningsTTM)}</p>
+          <p className="mt-0.5 truncate text-sm text-text-muted">
+            {companyName}
+          </p>
+          <div className="mt-2 flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs uppercase tracking-wider text-text-muted">Rev</span>
+              <span className="text-sm font-semibold tabular-nums text-foreground">{formatCurrency(revenueTTM)}</span>
+              {revenueTTM > 0 && (
+                <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${getMultipleColor(marketCap / revenueTTM, "ps")}`}>
+                  {formatMultiple(marketCap / revenueTTM)}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs uppercase tracking-wider text-text-muted">Earn</span>
+              <span className="text-sm font-semibold tabular-nums text-foreground">{formatCurrency(earningsTTM)}</span>
+              {earningsTTM > 0 && (
+                <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${getMultipleColor(marketCap / earningsTTM, "pe")}`}>
+                  {formatMultiple(marketCap / earningsTTM)}
+                </span>
+              )}
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Earnings countdown - positioned under Revenue/Earnings columns, only when expanded */}
-        {(expanded || comparing) && earnings && countdown && (
-          <div className="mt-3 grid grid-cols-3 gap-4">
-            <div></div>
-            <div className="col-span-2 flex items-center gap-1.5">
+      {/* Expanded content */}
+      {isOpen && (
+        <div className="border-t border-card-border px-5 pb-5 pt-4">
+          {/* Earnings countdown */}
+          {earnings && countdown && (
+            <div className="mb-5 flex items-center gap-1.5">
               <span className="text-sm text-text-muted">Earnings & Revenue Update:</span>
               <span className="text-sm font-medium text-green-primary">{countdown}</span>
               <svg
@@ -260,23 +296,17 @@ export default function CompanyCard({
                 />
               </svg>
             </div>
-          </div>
-        )}
-      </div>
+          )}
 
-      {/* Expanded view - Chart, Compare controls, and Advanced */}
-      {(expanded || comparing) && (
-        <div className="mt-4 border-t border-card-border pt-4">
-          {/* Chart - always visible, shows comparison if compareCompany is set */}
+          {/* Chart */}
           <ComparisonChart symbol1={symbol} symbol2={compareCompany || undefined} />
 
-          {/* Compare controls - consistent position below chart */}
+          {/* Compare controls */}
           <div className="mt-4">
             <p className="mb-3 text-sm text-text-muted">
               Compare {symbol} against a different company:
             </p>
 
-            {/* Suggested ticker chips */}
             {suggestedTickers.length > 0 && (
               <div className="mb-3 flex flex-wrap gap-2">
                 {suggestedTickers.map((ticker) => (
@@ -299,7 +329,6 @@ export default function CompanyCard({
               </div>
             )}
 
-            {/* Custom ticker input */}
             <form onSubmit={handleCompareSearch} className="flex gap-3">
               <input
                 type="text"
@@ -376,8 +405,6 @@ export default function CompanyCard({
           </div>
         </div>
       )}
-        </div>
-      </div>
     </div>
   );
 }

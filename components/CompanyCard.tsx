@@ -218,9 +218,6 @@ export default function CompanyCard({
               {symbol}
             </span>
             <div className="flex shrink-0 items-center gap-2">
-              <span className="text-lg font-semibold tabular-nums text-foreground">
-                {formatCurrency(marketCap)}
-              </span>
               <svg
                 width="14"
                 height="14"
@@ -238,13 +235,17 @@ export default function CompanyCard({
               </svg>
             </div>
           </div>
-          <p className="mt-0.5 truncate text-sm text-text-muted">
+          <p className="mt-0.5 truncate text-sm font-medium text-text-muted">
             {companyName}
           </p>
           <div className="mt-2 flex items-center gap-4">
             <div className="flex items-center gap-1.5">
+              <span className="text-xs uppercase tracking-wider text-text-muted">Mkt Cap</span>
+              <span className="text-sm font-bold tabular-nums text-foreground">{formatCurrency(marketCap)}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
               <span className="text-xs uppercase tracking-wider text-text-muted">Rev</span>
-              <span className="text-sm font-semibold tabular-nums text-foreground">{formatCurrency(revenueTTM)}</span>
+              <span className="text-sm font-semibold tabular-nums text-neutral-300">{formatCurrency(revenueTTM)}</span>
               {revenueTTM > 0 && (
                 <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${getMultipleColor(marketCap / revenueTTM, "ps")}`}>
                   {formatMultiple(marketCap / revenueTTM)}
@@ -253,7 +254,7 @@ export default function CompanyCard({
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-xs uppercase tracking-wider text-text-muted">Earn</span>
-              <span className="text-sm font-semibold tabular-nums text-foreground">{formatCurrency(earningsTTM)}</span>
+              <span className="text-sm font-semibold tabular-nums text-neutral-300">{formatCurrency(earningsTTM)}</span>
               {earningsTTM > 0 && (
                 <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${getMultipleColor(marketCap / earningsTTM, "pe")}`}>
                   {formatMultiple(marketCap / earningsTTM)}

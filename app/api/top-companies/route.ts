@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getTopCompaniesByMarketCap, getFullCompanyData, type CompanyData, type LimitedCompanyData } from "@/lib/fmp";
 
 // Tickers to exclude from screener results
-const EXCLUDED_TICKERS = new Set(["HONIV", "GOOGL", "BRK-A"]);
+const EXCLUDED_TICKERS = new Set(["ACTS", "HONIV", "GOOGL", "BRK-A"]);
 
 export async function GET(request: Request) {
   try {

@@ -72,7 +72,7 @@ export default function About() {
             <li>How much of that money does it keep?</li>
             <li>How much does the market believe a company is worth?</li>
           </ol>
-          <p>Each of these questions are explored in the context of time and comparison to other companies, and the data surfaced in the UI—primarily centered around revenue, earnings, and market cap—is intentionally constrained to the metrics that matter most, balancing clarity for the user with efficient upstream API usage and minimizing unnecessary payload size.</p>
+          <p>Yardstick shows a curated selection of US-listed companies. Company profiles update daily, while financial metrics and historical comparisons appear when our data plan provides them for a company.</p>
         </div>
       </div>
     </div>

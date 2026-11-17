@@ -300,48 +300,12 @@ export default function Home() {
       setLoadingCompanies(true);
 
       try {
-        const config = SECTORS[selectedSector];
-        const params = new URLSearchParams();
-        params.set("limit", config.limit.toString());
-        if (config.industries) {
-          params.set("industries", config.industries.join(","));
-        }
-
-        // Phase 1: Fetch quick data (screener only) for immediate display
-        const quickParams = new URLSearchParams(params);
-        quickParams.set("quick", "true");
-        const quickResponse = await fetch(`/api/top-companies?${quickParams.toString()}`);
-
-        if (quickResponse.status === 429) {
-          setSearchError("We've temporarily hit our API usage limit. Please try again later - this helps us keep the app free.");
-          setLoadingCompanies(false);
-          return;
-        }
-
-        if (quickResponse.ok) {
-          const quickData = await quickResponse.json();
-          setCompanies(quickData);
-        }
-
-        // Phase 2: Fetch full data in background
-        const fullResponse = await fetch(`/api/top-companies?${params.toString()}`);
-
-        if (fullResponse.status === 429) {
-          setSearchError("We've temporarily hit our API usage limit. Please try again later - this helps us keep the app free.");
-          setLoadingCompanies(false);
-          return;
-        }
-
-        if (!fullResponse.ok) {
-          throw new Error("Failed to fetch companies");
-        }
-
-        const fullData = await fullResponse.json();
-
-        // Cache the full results
-        setSectorCompanies(prev => ({ ...prev, [selectedSector]: fullData }));
+        const response = await fetch(`/api/top-companies?sector=${selectedSector}`);
+        if (!response.ok) throw new Error("Failed to fetch companies");
+        const data: CompanyData[] = await response.json();
+        setSectorCompanies(prev => ({ ...prev, [selectedSector]: data }));
         setLoadedSectors(prev => new Set(prev).add(selectedSector));
-        setCompanies(fullData);
+        setCompanies(data);
       } catch (error) {
         console.error("Error fetching companies:", error);
       } finally {
@@ -529,6 +493,8 @@ export default function Home() {
                 <span className="ml-2 shrink-0 text-sm text-text-muted">Loading...</span>
               )}
             </div>
+
+            <p className="mb-4 text-sm text-text-muted">Selected US-listed companies, ordered by market cap within this list. Data updates daily; some metrics and charts are unavailable on our data plan.</p>
 
             {/* Company list */}
             <div className="space-y-4">

@@ -1,6 +1,12 @@
-import type { CompanyProfile, SearchResult } from "@/types/financial";
+import type { CompanyProfile } from "@/types/financial";
 
 const BASE_URL = "https://financialmodelingprep.com/stable";
+
+// Cache identical upstream requests across visitors for one day.
+const FMP_CACHE_SECONDS = 24 * 60 * 60;
+function fmpFetch(url: string) {
+  return fetch(url, { next: { revalidate: FMP_CACHE_SECONDS } });
+}
 
 function getApiKey(): string {
   const key = process.env.FMP_API_KEY;
@@ -10,23 +16,11 @@ function getApiKey(): string {
   return key;
 }
 
-export async function searchCompanies(query: string): Promise<SearchResult[]> {
-  const response = await fetch(
-    `${BASE_URL}/search-name?query=${encodeURIComponent(query)}&limit=10&apikey=${getApiKey()}`
-  );
-
-  if (!response.ok) {
-    throw new Error(`FMP API error: ${response.status}`);
-  }
-
-  return response.json();
-}
-
 export async function getCompanyProfile(
   symbol: string
 ): Promise<CompanyProfile | null> {
-  const response = await fetch(
-    `${BASE_URL}/profile?symbol=${symbol.toUpperCase()}&apikey=${getApiKey()}`
+  const response = await fmpFetch(
+    `${BASE_URL}/profile?symbol=${encodeURIComponent(symbol.toUpperCase())}&apikey=${getApiKey()}`
   );
 
   if (!response.ok) {
@@ -48,13 +42,13 @@ interface RatiosTTM {
 }
 
 export async function getRatiosTTM(symbol: string): Promise<RatiosTTM | null> {
-  const response = await fetch(
-    `${BASE_URL}/ratios-ttm?symbol=${symbol.toUpperCase()}&apikey=${getApiKey()}`
+  const response = await fmpFetch(
+    `${BASE_URL}/ratios-ttm?symbol=${encodeURIComponent(symbol.toUpperCase())}&apikey=${getApiKey()}`
   );
 
   if (!response.ok) {
     // Return null for 402 (payment required) - data not available on current tier
-    if (response.status === 402) {
+    if (response.status === 402 || response.status === 403) {
       return null;
     }
     throw new Error(`FMP API error: ${response.status}`);
@@ -92,14 +86,10 @@ export type CompanyData = CompanyDisplayData | LimitedCompanyData;
 export async function getFullCompanyData(
   symbol: string
 ): Promise<CompanyData | null> {
-  const [profile, ratios] = await Promise.all([
-    getCompanyProfile(symbol),
-    getRatiosTTM(symbol),
-  ]);
-
-  if (!profile) {
-    return null;
-  }
+  const profile = await getCompanyProfile(symbol);
+  if (!profile) return null;
+  // Basic limits ratios to a small symbol set. A denied request becomes profile-only data.
+  const ratios = await getRatiosTTM(symbol);
 
   // If ratios aren't available, return limited data
   if (!ratios) {
@@ -142,145 +132,22 @@ export interface HistoricalMarketCap {
   marketCap: number;
 }
 
-interface HistoricalPrice {
-  date: string;
-  close: number;
-}
-
-async function getHistoricalPrices(symbol: string): Promise<HistoricalPrice[]> {
-  const response = await fetch(
-    `${BASE_URL}/historical-price-eod/full?symbol=${symbol.toUpperCase()}&apikey=${getApiKey()}`
-  );
-
-  if (!response.ok) {
-    throw new Error(`FMP API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data || [];
-}
-
-// Get estimated historical market cap (10 years, calculated from price * shares)
-export async function getEstimatedHistoricalMarketCap(
-  symbol: string,
-  years: number = 10
-): Promise<HistoricalMarketCap[]> {
-  // Fetch profile and historical prices in parallel
-  const [profile, prices] = await Promise.all([
-    getCompanyProfile(symbol),
-    getHistoricalPrices(symbol),
-  ]);
-
-  if (!profile || prices.length === 0) {
-    return [];
-  }
-
-  // Calculate shares outstanding from current market cap and price
-  const sharesOutstanding = profile.marketCap / profile.price;
-
-  // Filter to last N years
-  const cutoffDate = new Date();
-  cutoffDate.setFullYear(cutoffDate.getFullYear() - years);
-
-  // Calculate historical market cap from price * shares
-  return prices
-    .filter((p) => new Date(p.date) >= cutoffDate)
-    .map((p) => ({
-      symbol: symbol.toUpperCase(),
-      date: p.date,
-      marketCap: p.close * sharesOutstanding,
-    }));
-}
-
-// Get exact historical market cap with date range support
-export async function getExactHistoricalMarketCap(
-  symbol: string,
-  years: number = 5
-): Promise<HistoricalMarketCap[]> {
-  const to = new Date();
-  const from = new Date();
-  from.setFullYear(from.getFullYear() - years);
-
-  const fromStr = from.toISOString().split("T")[0];
-  const toStr = to.toISOString().split("T")[0];
-
-  const response = await fetch(
-    `${BASE_URL}/historical-market-capitalization?symbol=${symbol.toUpperCase()}&from=${fromStr}&to=${toStr}&limit=5000&apikey=${getApiKey()}`
-  );
-
-  if (!response.ok) {
-    if (response.status === 402) {
-      return [];
-    }
-    throw new Error(`FMP API error: ${response.status}`);
-  }
-
-  const data: HistoricalMarketCap[] = await response.json();
-  return data || [];
-}
-
-// Get full historical market cap (all available history, with pagination if needed)
 export async function getFullHistoricalMarketCap(
   symbol: string
 ): Promise<HistoricalMarketCap[]> {
-  const toStr = new Date().toISOString().split("T")[0];
-  const fromStr = "1900-01-01";
-
-  // First request - gets most recent 5000 records
-  const response = await fetch(
-    `${BASE_URL}/historical-market-capitalization?symbol=${symbol.toUpperCase()}&from=${fromStr}&to=${toStr}&limit=5000&apikey=${getApiKey()}`
+  // Basic permits at most one month of exact market-cap history.
+  const to = new Date();
+  const from = new Date(to);
+  from.setMonth(from.getMonth() - 1);
+  const fromStr = from.toISOString().split("T")[0];
+  const toStr = to.toISOString().split("T")[0];
+  const response = await fmpFetch(
+    `${BASE_URL}/historical-market-capitalization?symbol=${encodeURIComponent(symbol.toUpperCase())}&from=${fromStr}&to=${toStr}&apikey=${getApiKey()}`
   );
-
-  if (!response.ok) {
-    if (response.status === 402) {
-      return [];
-    }
-    throw new Error(`FMP API error: ${response.status}`);
-  }
-
+  if (response.status === 402 || response.status === 403) return [];
+  if (!response.ok) throw new Error(`FMP API error: ${response.status}`);
   const data: HistoricalMarketCap[] = await response.json();
-  if (!data || data.length === 0) {
-    return [];
-  }
-
-  // If we got less than 5000 records, we have all the data
-  if (data.length < 5000) {
-    return data;
-  }
-
-  // Otherwise, we need to fetch older data
-  // The data is sorted newest first, so the oldest date is at the end
-  const oldestDate = data[data.length - 1].date;
-
-  // Fetch older data (from 1900 to the oldest date we have)
-  const olderResponse = await fetch(
-    `${BASE_URL}/historical-market-capitalization?symbol=${symbol.toUpperCase()}&from=${fromStr}&to=${oldestDate}&limit=5000&apikey=${getApiKey()}`
-  );
-
-  if (!olderResponse.ok) {
-    // If second request fails, return what we have
-    return data;
-  }
-
-  const olderData: HistoricalMarketCap[] = await olderResponse.json();
-  if (!olderData || olderData.length === 0) {
-    return data;
-  }
-
-  // Combine and dedupe (the oldest date might be in both responses)
-  const allDates = new Set(data.map((d) => d.date));
-  const uniqueOlderData = olderData.filter((d) => !allDates.has(d.date));
-
-  // Return combined data, sorted newest first
-  return [...data, ...uniqueOlderData];
-}
-
-// Backwards compatibility
-export async function getHistoricalMarketCap(
-  symbol: string,
-  years: number = 10
-): Promise<HistoricalMarketCap[]> {
-  return getEstimatedHistoricalMarketCap(symbol, years);
+  return Array.isArray(data) ? data : [];
 }
 
 // Historical income statement data
@@ -300,14 +167,14 @@ interface IncomeStatementRecord {
 
 export async function getHistoricalIncomeStatement(
   symbol: string,
-  quarters: number = 40
+  quarters: number = 5
 ): Promise<HistoricalFinancials[]> {
-  const response = await fetch(
-    `${BASE_URL}/income-statement?symbol=${symbol.toUpperCase()}&period=quarterly&limit=${quarters}&apikey=${getApiKey()}`
+  const response = await fmpFetch(
+    `${BASE_URL}/income-statement?symbol=${encodeURIComponent(symbol.toUpperCase())}&period=quarterly&limit=${quarters}&apikey=${getApiKey()}`
   );
 
   if (!response.ok) {
-    if (response.status === 402) {
+    if (response.status === 402 || response.status === 403) {
       return [];
     }
     throw new Error(`FMP API error: ${response.status}`);
@@ -338,12 +205,12 @@ export interface EarningsData {
 }
 
 export async function getNextEarnings(symbol: string): Promise<EarningsData | null> {
-  const response = await fetch(
-    `${BASE_URL}/earnings?symbol=${symbol.toUpperCase()}&limit=5&apikey=${getApiKey()}`
+  const response = await fmpFetch(
+    `${BASE_URL}/earnings?symbol=${encodeURIComponent(symbol.toUpperCase())}&limit=5&apikey=${getApiKey()}`
   );
 
   if (!response.ok) {
-    if (response.status === 402) {
+    if (response.status === 402 || response.status === 403) {
       return null;
     }
     throw new Error(`FMP API error: ${response.status}`);
@@ -376,42 +243,4 @@ export async function getNextEarnings(symbol: string): Promise<EarningsData | nu
   }
 
   return upcoming;
-}
-
-// Screener result from FMP
-export interface ScreenerResult {
-  symbol: string;
-  companyName: string;
-  marketCap: number;
-  sector: string;
-  industry: string;
-  beta: number;
-  price: number;
-  isEtf: boolean;
-  isFund: boolean;
-}
-
-// Get top companies by market cap, optionally filtered by industries
-export async function getTopCompaniesByMarketCap(
-  limit: number = 50,
-  industries?: string[]
-): Promise<ScreenerResult[]> {
-  let url = `${BASE_URL}/company-screener?sortBy=marketCap&sortOrder=desc&limit=${limit}&isEtf=false&isFund=false&apikey=${getApiKey()}`;
-
-  if (industries && industries.length > 0) {
-    const industriesParam = industries.map(i => encodeURIComponent(i)).join(",");
-    url += `&industry=${industriesParam}`;
-  }
-
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    if (response.status === 429) {
-      throw new Error("429");
-    }
-    throw new Error(`FMP API error: ${response.status}`);
-  }
-
-  const data: ScreenerResult[] = await response.json();
-  return data || [];
 }

@@ -6,7 +6,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const ticker = searchParams.get("q");
 
-    if (!ticker || ticker.length < 1) {
+    if (!ticker || !/^[A-Z0-9.-]{1,12}$/i.test(ticker)) {
       return NextResponse.json(null);
     }
 

@@ -1,79 +1,33 @@
 import { NextResponse } from "next/server";
-import { getTopCompaniesByMarketCap, getFullCompanyData, type CompanyData, type LimitedCompanyData } from "@/lib/fmp";
-
-// Tickers to exclude from screener results
-const EXCLUDED_TICKERS = new Set(["ACTS", "HONIV", "GOOGL", "BRK-A"]);
+import { getFullCompanyData, type CompanyData } from "@/lib/fmp";
+import { COMPANY_LISTS } from "@/lib/company-lists";
 
 export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const sector = searchParams.get("sector") || "all";
+  const symbols = COMPANY_LISTS[sector];
+  if (!symbols) return NextResponse.json({ error: "Unknown sector" }, { status: 400 });
+
   try {
-    const { searchParams } = new URL(request.url);
-    const limitParam = searchParams.get("limit");
-    const industriesParam = searchParams.get("industries");
-    const quickMode = searchParams.get("quick") === "true";
-
-    const limit = limitParam ? parseInt(limitParam, 10) : 50;
-    const industries = industriesParam ? industriesParam.split(",") : undefined;
-
-    // Step 1: Get top companies from screener (request extra to account for exclusions)
-    const screenerResults = await getTopCompaniesByMarketCap(limit + EXCLUDED_TICKERS.size, industries);
-
-    // Filter out excluded tickers
-    const filteredResults = screenerResults
-      .filter(r => !EXCLUDED_TICKERS.has(r.symbol))
-      .slice(0, limit);
-
-    if (filteredResults.length === 0) {
-      return NextResponse.json([]);
+    const results = await Promise.all(symbols.map(async (symbol) => {
+      try {
+        return await getFullCompanyData(symbol);
+      } catch (error) {
+        console.error(`Failed to load ${symbol}:`, error);
+        return null;
+      }
+    }));
+    const companies = results.filter((item): item is CompanyData => item !== null);
+    if (companies.length === 0) {
+      return NextResponse.json({ error: "Company data temporarily unavailable" }, { status: 503 });
     }
-
-    // Quick mode: return screener data immediately as limited company data
-    if (quickMode) {
-      const limitedCompanies: LimitedCompanyData[] = filteredResults.map(r => ({
-        symbol: r.symbol,
-        companyName: r.companyName,
-        marketCap: r.marketCap,
-        beta: r.beta,
-        isLimited: true,
-      }));
-      return NextResponse.json(limitedCompanies);
-    }
-
-    // Step 2: Fetch full data for each company in parallel batches
-    const batchSize = 10;
-    const companies: CompanyData[] = [];
-
-    for (let i = 0; i < filteredResults.length; i += batchSize) {
-      const batch = filteredResults.slice(i, i + batchSize);
-      const batchResults = await Promise.all(
-        batch.map(async (result) => {
-          try {
-            return await getFullCompanyData(result.symbol);
-          } catch {
-            return null;
-          }
-        })
-      );
-
-      batchResults.forEach((data) => {
-        if (data) {
-          companies.push(data);
-        }
-      });
-    }
-
-    return NextResponse.json(companies);
+    // Rank only within the curated selection.
+    companies.sort((a, b) => b.marketCap - a.marketCap);
+    return NextResponse.json(companies, {
+      headers: { "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=3600" },
+    });
   } catch (error) {
-    console.error("Error fetching top companies:", error);
-    const errorMessage = error instanceof Error ? error.message : "";
-    if (errorMessage.includes("429")) {
-      return NextResponse.json(
-        { error: "rate_limit" },
-        { status: 429 }
-      );
-    }
-    return NextResponse.json(
-      { error: "Failed to fetch top companies" },
-      { status: 500 }
-    );
+    console.error("Error fetching selected companies:", error);
+    return NextResponse.json({ error: "Failed to fetch selected companies" }, { status: 500 });
   }
 }

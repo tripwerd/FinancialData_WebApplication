@@ -35,14 +35,13 @@ interface ChartData {
 }
 
 type ChartMetric = "marketCap" | "revenue" | "earnings";
-type TimeRange = "all" | "5year" | "1month";
 
 // Chart data cache with LRU-style eviction
 const CACHE_MAX_SIZE = 20;
 type CacheKey = string;
 type CacheValue = {
-  marketCap: HistoricalData[];
-  financials: HistoricalFinancials[];
+  marketCap?: HistoricalData[];
+  financials?: HistoricalFinancials[];
 };
 const chartCache = new Map<CacheKey, CacheValue>();
 const cacheOrder: CacheKey[] = [];
@@ -99,30 +98,19 @@ export default function ComparisonChart({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [metric, setMetric] = useState<ChartMetric>("marketCap");
-  const [timeRange, setTimeRange] = useState<TimeRange>("5year");
 
   useEffect(() => {
     async function fetchDataForSymbol(sym: string): Promise<CacheValue> {
-      // Check cache first
-      const cached = getCachedData(sym);
-      if (cached) {
-        return cached;
-      }
-
-      // Fetch both market cap and financials data
-      const [mcapRes, finRes] = await Promise.all([
-        fetch(`/api/historical/${sym}`),
-        fetch(`/api/historical-financials/${sym}`),
-      ]);
-
-      if (mcapRes.status === 429 || finRes.status === 429) {
-        throw new Error("rate_limit");
-      }
-
-      const marketCap: HistoricalData[] = mcapRes.ok ? await mcapRes.json() : [];
-      const financials: HistoricalFinancials[] = finRes.ok ? await finRes.json() : [];
-
-      const data = { marketCap, financials };
+      const cached = getCachedData(sym) || {};
+      if (metric === "marketCap" && cached.marketCap !== undefined) return cached;
+      if (metric !== "marketCap" && cached.financials !== undefined) return cached;
+      const path = metric === "marketCap" ? "historical" : "historical-financials";
+      const response = await fetch(`/api/${path}/${encodeURIComponent(sym)}`);
+      if (response.status === 429) throw new Error("rate_limit");
+      const records = response.ok ? await response.json() : [];
+      const data: CacheValue = metric === "marketCap"
+        ? { ...cached, marketCap: records }
+        : { ...cached, financials: records };
       setCachedData(sym, data);
       return data;
     }
@@ -140,26 +128,8 @@ export default function ComparisonChart({
         const data2 = results[1] || null;
 
         if (metric === "marketCap") {
-          // Filter data by time range
-          const now = new Date();
-          let cutoffDate: Date;
-
-          if (timeRange === "1month") {
-            cutoffDate = new Date(now);
-            cutoffDate.setMonth(cutoffDate.getMonth() - 1);
-          } else if (timeRange === "5year") {
-            cutoffDate = new Date(now);
-            cutoffDate.setFullYear(cutoffDate.getFullYear() - 5);
-          } else {
-            // "all" - use earliest possible date
-            cutoffDate = new Date("1900-01-01");
-          }
-
-          const filterByTimeRange = (data: HistoricalData[]) =>
-            data.filter((d) => new Date(d.date) >= cutoffDate);
-
-          const filtered1 = filterByTimeRange(data1.marketCap);
-          const filtered2 = data2 ? filterByTimeRange(data2.marketCap) : [];
+          const filtered1 = data1.marketCap || [];
+          const filtered2 = data2?.marketCap || [];
 
           const dateMap = new Map<string, ChartData>();
 
@@ -201,7 +171,7 @@ export default function ComparisonChart({
           const quarterMap = new Map<string, ChartData>();
           const valueKey = metric === "revenue" ? "revenue" : "netIncome";
 
-          data1.financials.forEach((d) => {
+          (data1.financials || []).forEach((d) => {
             const quarter = getCalendarQuarter(d.date);
             quarterMap.set(quarter, {
               date: quarter,
@@ -210,7 +180,7 @@ export default function ComparisonChart({
           });
 
           if (data2 && symbol2) {
-            data2.financials.forEach((d) => {
+            (data2.financials || []).forEach((d) => {
               const quarter = getCalendarQuarter(d.date);
               const existing = quarterMap.get(quarter);
               if (existing) {
@@ -242,7 +212,7 @@ export default function ComparisonChart({
     }
 
     fetchData();
-  }, [symbol1, symbol2, metric, timeRange]);
+  }, [symbol1, symbol2, metric]);
 
   if (loading) {
     return (
@@ -256,14 +226,6 @@ export default function ComparisonChart({
     return (
       <div className="flex h-64 items-center justify-center">
         <p className="text-red-400">{error}</p>
-      </div>
-    );
-  }
-
-  if (chartData.length === 0) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <p className="text-text-muted">No data available</p>
       </div>
     );
   }
@@ -306,55 +268,13 @@ export default function ComparisonChart({
         </div>
       </div>
 
-      {/* Time range toggle - only for Market Cap */}
-      {metric === "marketCap" && (
-        <div className="mb-4 flex items-center gap-2">
-          <span className="text-sm text-text-muted">Range:</span>
-          <div className="flex rounded-lg border border-card-border overflow-hidden">
-            <button
-              onClick={() => setTimeRange("all")}
-              className={`cursor-pointer px-2 py-1 text-xs font-medium transition-colors ${
-                timeRange === "all"
-                  ? "bg-green-primary text-black"
-                  : "bg-card-bg text-text-muted hover:text-foreground"
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setTimeRange("5year")}
-              className={`cursor-pointer px-2 py-1 text-xs font-medium transition-colors ${
-                timeRange === "5year"
-                  ? "bg-green-primary text-black"
-                  : "bg-card-bg text-text-muted hover:text-foreground"
-              }`}
-            >
-              5Y
-            </button>
-            <button
-              onClick={() => setTimeRange("1month")}
-              className={`cursor-pointer px-2 py-1 text-xs font-medium transition-colors ${
-                timeRange === "1month"
-                  ? "bg-green-primary text-black"
-                  : "bg-card-bg text-text-muted hover:text-foreground"
-              }`}
-            >
-              1M
-            </button>
-          </div>
-        </div>
-      )}
-
-
-      {/* Quarterly label for revenue/earnings */}
-      {metric !== "marketCap" && (
-        <div className="mb-4">
-          <span className="text-sm text-text-muted">Quarterly data (~10 years)</span>
-        </div>
-      )}
+      <p className="mb-4 text-sm text-text-muted">
+        {metric === "marketCap" ? "Up to 1 month of market cap data" : "Up to 5 quarterly reports"}
+      </p>
+      {chartData.length === 0 && <p className="py-16 text-center text-text-muted">This chart is unavailable for this company on the current data plan.</p>}
 
       {/* Chart */}
-      <div style={{ width: "100%", height: 320 }}>
+      {chartData.length > 0 && <div style={{ width: "100%", height: 320 }}>
         <ResponsiveContainer width="100%" height={320}>
           <LineChart data={chartData}>
             <XAxis
@@ -440,7 +360,7 @@ export default function ComparisonChart({
             )}
           </LineChart>
         </ResponsiveContainer>
-      </div>
+      </div>}
     </div>
   );
 }
